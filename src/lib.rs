@@ -1,3 +1,6 @@
+mod candidate;
+
+use self::candidate::{Candidate, CandidateAsScore};
 use std::collections::binary_heap::BinaryHeap;
 
 /// Represents the set of subproblems of an intermediate problem
@@ -28,39 +31,6 @@ pub trait ProblemSpace<Score> {
 
     /// Value of the boundary function at the problem space.
     fn bound(&self) -> Score;
-}
-
-struct Candidate<Node, Score> {
-    node: Node,
-    /// Score is always defined.
-    /// For intermediate subproblems, it is the value of the bounding function.
-    /// When a node is discovered to be a leaf node, its score is to be replaced
-    /// with the value of the objective function.
-    score: Score,
-}
-
-/// Wraps a `Candidate` and implements `{Partial,}Eq` and `{Partial,}Ord`
-/// based on the score, ignoring the candidate.
-struct CandidateAsScore<Node, Score: Ord>(Candidate<Node, Score>);
-
-impl<Node, Score: Ord> PartialEq for CandidateAsScore<Node, Score> {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.score == other.0.score
-    }
-}
-
-impl<Node, Score: Ord> Eq for CandidateAsScore<Node, Score> {}
-
-impl<Node, Score: Ord> PartialOrd for CandidateAsScore<Node, Score> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.0.score.cmp(&other.0.score))
-    }
-}
-
-impl<Node, Score: Ord> Ord for CandidateAsScore<Node, Score> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap()
-    }
 }
 
 pub fn solve<Score: Ord, Node: ProblemSpace<Score>>(initial: Node) -> Option<Node> {
