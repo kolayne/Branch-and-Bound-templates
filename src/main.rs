@@ -1,4 +1,4 @@
-use bb::SubproblemsOrScore::{Score, Subproblems};
+use bb::SubproblemResolution;
 use branch_and_bound as bb;
 
 #[derive(Clone, Debug)]
@@ -7,17 +7,17 @@ struct GraphNode {
     next: Vec<GraphNode>,
 }
 
-impl bb::ProblemSpace<i32> for GraphNode {
-    fn branch_or_evaluate(&self) -> branch_and_bound::SubproblemsOrScore<GraphNode, i32> {
+impl bb::Subproblem<i32> for GraphNode {
+    fn branch_or_evaluate(&self) -> branch_and_bound::SubproblemResolution<GraphNode, i32> {
         if self.bound < 5 {
             eprintln!("I should not be visited in Best-First-Search");
         } else {
             eprintln!("Node with bound {0} visited", self.bound)
         }
         if self.next.is_empty() {
-            Score(self.bound)
+            SubproblemResolution::Solved(self.bound)
         } else {
-            Subproblems(Box::new(self.next.clone().into_iter()))
+            SubproblemResolution::Branched(Box::new(self.next.clone().into_iter()))
         }
     }
 

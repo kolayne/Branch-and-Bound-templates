@@ -5,19 +5,17 @@ use std::collections::binary_heap::BinaryHeap;
 
 /// Represents the set of subproblems of an intermediate problem
 /// or the value of the objective function of a feasible solution (leaf node).
-pub enum SubproblemsOrScore<Node: ?Sized, Score> {
+pub enum SubproblemResolution<Node: ?Sized, Score> {
     /// Subproblems of an intermediate problem
-    Subproblems(Box<dyn Iterator<Item = Node>>),
+    Branched(Box<dyn Iterator<Item = Node>>),
     /// The value of the objective function of a feasible solution
-    Score(Score),
+    Solved(Score),
 }
 // TODO: Consider an alternative implementation by making the iterator
 // type a generic variable rather than a `dyn`
 
-use SubproblemsOrScore::{Score, Subproblems};
-
 /// Represents a problem (subproblem) to be solved with branch-and-bound
-pub trait ProblemSpace<Score> {
+pub trait Subproblem<Score> {
     /// Evaluates a problem space.
     ///
     /// If the space is to be broken fruther into subproblems, returns
@@ -27,13 +25,13 @@ pub trait ProblemSpace<Score> {
     /// If the space consists of just one feasible solution to be solved
     /// directly, returns the score, which is the value of the objective
     /// function at the solution.
-    fn branch_or_evaluate(&self) -> SubproblemsOrScore<Self, Score>;
+    fn branch_or_evaluate(&self) -> SubproblemResolution<Self, Score>;
 
     /// Value of the boundary function at the problem space.
     fn bound(&self) -> Score;
 }
 
-pub fn solve<Score: Ord, Node: ProblemSpace<Score>>(initial: Node) -> Option<Node> {
+pub fn solve<Score: Ord, Node: Subproblem<Score>>(initial: Node) -> Option<Node> {
     let mut ans: Option<Candidate<Node, Score>> = None;
 
     let mut queue = BinaryHeap::new();
@@ -54,7 +52,7 @@ pub fn solve<Score: Ord, Node: ProblemSpace<Score>>(initial: Node) -> Option<Nod
 
         match candidate.node.branch_or_evaluate() {
             // Intermediate subproblem
-            Subproblems(subproblems) => {
+            SubproblemResolution::Branched(subproblems) => {
                 for node in subproblems {
                     let score = node.bound();
                     queue.push(ScoreOrderedCandidate(Candidate { node, score }));
@@ -62,7 +60,7 @@ pub fn solve<Score: Ord, Node: ProblemSpace<Score>>(initial: Node) -> Option<Nod
             }
 
             // Leaf node
-            Score(objective_score) => {
+            SubproblemResolution::Solved(objective_score) => {
                 ans = match ans {
                     None => Some(candidate),
                     Some(incumbent) => {
