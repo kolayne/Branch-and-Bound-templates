@@ -1,6 +1,6 @@
 mod candidate;
 
-use self::candidate::{Candidate, CandidateAsScore};
+use self::candidate::{Candidate, ScoreOrderedCandidate};
 use std::collections::binary_heap::BinaryHeap;
 
 /// Represents the set of subproblems of an intermediate problem
@@ -37,12 +37,12 @@ pub fn solve<Score: Ord, Node: ProblemSpace<Score>>(initial: Node) -> Option<Nod
     let mut ans: Option<Candidate<Node, Score>> = None;
 
     let mut queue = BinaryHeap::new();
-    queue.push(CandidateAsScore(Candidate {
+    queue.push(ScoreOrderedCandidate(Candidate {
         score: initial.bound(),
         node: initial,
     }));
 
-    while let Some(CandidateAsScore(candidate)) = queue.pop() {
+    while let Some(ScoreOrderedCandidate(candidate)) = queue.pop() {
         if let Some(incumbent) = &ans {
             if candidate.score < incumbent.score {
                 // When a candidate's _bound_ is worse than the incumbent's
@@ -57,7 +57,7 @@ pub fn solve<Score: Ord, Node: ProblemSpace<Score>>(initial: Node) -> Option<Nod
             Subproblems(subproblems) => {
                 for node in subproblems {
                     let score = node.bound();
-                    queue.push(CandidateAsScore(Candidate { node, score }));
+                    queue.push(ScoreOrderedCandidate(Candidate { node, score }));
                 }
             }
 
