@@ -7,33 +7,22 @@ struct GraphNode {
     next: Vec<GraphNode>,
 }
 
-struct Problem {
-    root: GraphNode,
-}
-
-impl bb::Problem<GraphNode, i32> for Problem {
-    fn initial(&self) -> GraphNode {
-        self.root.clone()
-    }
-
-    fn branch_or_evaluate(
-        &self,
-        node: &GraphNode,
-    ) -> branch_and_bound::SubproblemsOrScore<GraphNode, i32> {
-        if node.bound < 5 {
+impl bb::ProblemSpace<i32> for GraphNode {
+    fn branch_or_evaluate(&self) -> branch_and_bound::SubproblemsOrScore<GraphNode, i32> {
+        if self.bound < 5 {
             eprintln!("I should not be visited in Best-First-Search");
         } else {
-            eprintln!("Node with bound {0} visited", node.bound)
+            eprintln!("Node with bound {0} visited", self.bound)
         }
-        if node.next.is_empty() {
-            Score(node.bound)
+        if self.next.is_empty() {
+            Score(self.bound)
         } else {
-            Subproblems(Box::new(node.next.clone().into_iter()))
+            Subproblems(Box::new(self.next.clone().into_iter()))
         }
     }
 
-    fn bound(&self, node: &GraphNode) -> i32 {
-        node.bound
+    fn bound(&self) -> i32 {
+        self.bound
     }
 }
 
@@ -86,5 +75,5 @@ fn main() {
         next: vec![parent1p23, parent0p45],
     };
 
-    println!("Max node: {:#?}", bb::solve(&Problem { root }));
+    println!("Max node: {:#?}", bb::solve(root));
 }

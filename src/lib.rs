@@ -2,7 +2,7 @@ use std::collections::binary_heap::BinaryHeap;
 
 /// Represents the set of subproblems of an intermediate problem
 /// or the value of the objective function of a feasible solution (leaf node).
-pub enum SubproblemsOrScore<Node, Score: Ord> {
+pub enum SubproblemsOrScore<Node: ?Sized, Score> {
     /// Subproblems of an intermediate problem
     Subproblems(Box<dyn Iterator<Item = Node>>),
     /// The value of the objective function of a feasible solution
@@ -13,24 +13,24 @@ pub enum SubproblemsOrScore<Node, Score: Ord> {
 
 use SubproblemsOrScore::{Score, Subproblems};
 
-/// Represents a problem that is to be solved with branch-and-bound
-pub trait Problem<Node, Score: Ord> {
-    /// The initial problem state
-    fn initial(&self) -> Node;
-
-    /// Processes a node.
+/// Represents a problem (subproblem) to be solved with branch-and-bound
+pub trait ProblemSpace<Score> {
+    /// Evaluates a problem space.
     ///
-    /// If the given node is a fesible solution, returns the value of the
-    /// objective function at it.
+    /// If the space is to be broken fruther into subproblems, returns
+    /// a sequence of subproblems (may be empty, which discards
+    /// the current subspace).
     ///
-    /// If the given node is a subproblem that is to be split further
-    /// into subproblems, returns the set of its subproblems.
-    fn branch_or_evaluate(&self, node: &Node) -> SubproblemsOrScore<Node, Score>;
+    /// If the space consists of just one feasible solution to be solved
+    /// directly, returns the score, which is the value of the objective
+    /// function at the solution.
+    fn branch_or_evaluate(&self) -> SubproblemsOrScore<Self, Score>;
 
-    fn bound(&self, node: &Node) -> Score;
+    /// Value of the boundary function at the problem space.
+    fn bound(&self) -> Score;
 }
 
-struct Candidate<Node, Score: Ord> {
+struct Candidate<Node, Score> {
     node: Node,
     /// Score is always defined.
     /// For intermediate subproblems, it is the value of the bounding function.
@@ -63,13 +63,13 @@ impl<Node, Score: Ord> Ord for CandidateAsScore<Node, Score> {
     }
 }
 
-pub fn solve<Node, Score: Ord>(problem: &impl Problem<Node, Score>) -> Option<Node> {
+pub fn solve<Score: Ord, Node: ProblemSpace<Score>>(initial: Node) -> Option<Node> {
     let mut ans: Option<Candidate<Node, Score>> = None;
 
     let mut queue = BinaryHeap::new();
     queue.push(CandidateAsScore(Candidate {
-        node: problem.initial(),
-        score: problem.bound(&problem.initial()),
+        score: initial.bound(),
+        node: initial,
     }));
 
     while let Some(CandidateAsScore(candidate)) = queue.pop() {
@@ -82,11 +82,11 @@ pub fn solve<Node, Score: Ord>(problem: &impl Problem<Node, Score>) -> Option<No
             }
         }
 
-        match problem.branch_or_evaluate(&candidate.node) {
+        match candidate.node.branch_or_evaluate() {
             // Intermediate subproblem
             Subproblems(subproblems) => {
                 for node in subproblems {
-                    let score = problem.bound(&node);
+                    let score = node.bound();
                     queue.push(CandidateAsScore(Candidate { node, score }));
                 }
             }
