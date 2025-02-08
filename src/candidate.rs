@@ -1,35 +1,96 @@
-pub(crate) struct Candidate<Node, Score> {
-    pub node: Node,
-    /// Score is always defined.
-    /// For intermediate subproblems, it is the value of the bounding function.
-    /// When a node is discovered to be a leaf node, its score is to be replaced
-    /// with the value of the objective function.
-    pub score: Score,
+use crate::{Subproblem, SubproblemResolution};
+
+/// `OrderedCandidate` encapsulates a `Node` (which has to be `Subproblem`)
+/// and defines an order on it.
+pub trait OrderedCandidate: Ord + Subproblem {
+    type Node: Subproblem;
+    type Score: Ord;
+
+    /// Create an `OrderedCandidate`.
+    /// This method should be used for the root node.
+    fn new(root: Self::Node) -> Self;
+    /// Peeks at the encapsulated node
+    fn node(&self) -> &Self::Node;
+    /// Consumes the candidate and returns the node
+    fn into_node(self) -> Self::Node;
 }
 
-/// Wraps a `Candidate` and implements `{Partial,}Eq` and `{Partial,}Ord`
-/// based on the score, ignoring the candidate.
+/// `BoundOrderedCandidate` implements `{Partial,}Eq` and `{Partial,}Ord`
+/// based on the value of `node.bound()`.
 ///
-/// Used for Best-First-Search.
-pub(crate) struct ScoreOrderedCandidate<Node, Score: Ord>(pub Candidate<Node, Score>);
+/// Note: two `BoundOrderedCandidate`s wrapping different nodes with the boundary
+/// will compare equal!
+pub(crate) struct BoundOrderedCandidate<Node: Subproblem<Score = Score>, Score: Ord> {
+    node: Node,
+    bound: Score,
+}
 
-impl<Node, Score: Ord> PartialEq for ScoreOrderedCandidate<Node, Score> {
+impl<Score: Ord, Node: Subproblem<Score = Score>> PartialEq for BoundOrderedCandidate<Node, Score> {
     fn eq(&self, other: &Self) -> bool {
-        self.0.score == other.0.score
+        self.bound == other.bound
     }
 }
 
-impl<Node, Score: Ord> Eq for ScoreOrderedCandidate<Node, Score> {}
+impl<Score: Ord, Node: Subproblem<Score = Score>> Eq for BoundOrderedCandidate<Node, Score> {}
 
-impl<Node, Score: Ord> PartialOrd for ScoreOrderedCandidate<Node, Score> {
+impl<Score: Ord, Node: Subproblem<Score = Score>> PartialOrd
+    for BoundOrderedCandidate<Node, Score>
+{
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.0.score.cmp(&other.0.score))
+        Some(self.cmp(other))
     }
 }
 
-impl<Node, Score: Ord> Ord for ScoreOrderedCandidate<Node, Score> {
+impl<Score: Ord, Node: Subproblem<Score = Score>> Ord for BoundOrderedCandidate<Node, Score> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap()
+        self.bound.cmp(&other.bound)
+    }
+}
+
+impl<Score, Node> Subproblem for BoundOrderedCandidate<Node, Score>
+where
+    Score: Ord,
+    Node: Subproblem<Score = Score> + 'static,
+{
+    type Score = Score;
+
+    fn branch_or_evaluate(&self) -> crate::SubproblemResolution<Self, Self::Score> {
+        use SubproblemResolution::{Branched, Solved};
+
+        match self.node.branch_or_evaluate() {
+            Solved(score) => Solved(score),
+            // Just wrap all `Node`s into `Self`. Won't compile without clojure (why??)
+            Branched(subproblems) => Branched(Box::new(subproblems.map(|node| Self::new(node)))),
+        }
+    }
+
+    fn bound(&self) -> Self::Score {
+        self.node.bound()
+    }
+}
+
+impl<Score, Node> OrderedCandidate for BoundOrderedCandidate<Node, Score>
+where
+    Score: Ord,
+    Node: Subproblem<Score = Score> + 'static,
+{
+    type Node = Node;
+
+    type Score = Score;
+
+    fn new(root: Self::Node) -> Self {
+        Self {
+            bound: root.bound(),
+            node: root,
+        }
+    }
+
+    fn node(&self) -> &Self::Node {
+        &self.node
+    }
+
+    fn into_node(self) -> Self::Node {
+        self.node
     }
 }
 

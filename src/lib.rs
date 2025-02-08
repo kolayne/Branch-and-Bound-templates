@@ -1,7 +1,21 @@
 mod candidate;
 
-use self::candidate::{Candidate, ScoreOrderedCandidate};
+use self::candidate::{BoundOrderedCandidate, OrderedCandidate};
 use std::collections::binary_heap::BinaryHeap;
+
+/*
+ * There are three similar concepts: Node, Subproblem, and Candidate.
+ *
+ * `Node` is a type defined by user that must implement `Subproblem`.
+ *
+ * `Subproblem` (trait) acts as a search space: a `Subproblem` can
+ * either break down further into subproblems, or indicate a solution
+ * (the value of the objective function). We can also estimate an upper
+ * boundary of the solution in the search space.
+ *
+ * `OrderedCandidate` (trait) wraps a `Node` to add order (a particular order
+ * depends on the implementation of the trait).
+ */
 
 /// Represents the set of subproblems of an intermediate problem
 /// or the value of the objective function of a feasible solution (leaf node).
@@ -33,18 +47,20 @@ pub trait Subproblem {
     fn bound(&self) -> Self::Score;
 }
 
-pub fn solve<Score: Ord, Node: Subproblem<Score = Score>>(initial: Node) -> Option<Node> {
-    let mut ans: Option<Candidate<Node, Score>> = None;
+pub fn solve<Score, Node>(initial: Node) -> Option<Node>
+where
+    Score: Ord,
+    Node: Subproblem<Score = Score> + 'static,
+{
+    // Best candidate: its objective score and the node itself
+    let mut best: Option<(Score, Node)> = None;
 
     let mut queue = BinaryHeap::new();
-    queue.push(ScoreOrderedCandidate(Candidate {
-        score: initial.bound(),
-        node: initial,
-    }));
+    queue.push(BoundOrderedCandidate::new(initial));
 
-    while let Some(ScoreOrderedCandidate(candidate)) = queue.pop() {
-        if let Some(incumbent) = &ans {
-            if candidate.score < incumbent.score {
+    while let Some(candidate) = queue.pop() {
+        if let Some((score, _incumbent)) = &best {
+            if &candidate.bound() < score {
                 // When a candidate's _bound_ is worse than the incumbent's
                 // objective score, we don't need to search any further.
                 break;
@@ -52,28 +68,24 @@ pub fn solve<Score: Ord, Node: Subproblem<Score = Score>>(initial: Node) -> Opti
             }
         }
 
-        match candidate.node.branch_or_evaluate() {
+        match candidate.branch_or_evaluate() {
             // Intermediate subproblem
             SubproblemResolution::Branched(subproblems) => {
                 for node in subproblems {
-                    let score = node.bound();
-                    queue.push(ScoreOrderedCandidate(Candidate { node, score }));
+                    queue.push(node);
                 }
             }
 
             // Leaf node
-            SubproblemResolution::Solved(objective_score) => {
-                ans = match ans {
-                    None => Some(candidate),
-                    Some(incumbent) => {
-                        if incumbent.score < objective_score {
+            SubproblemResolution::Solved(candidate_score) => {
+                best = match best {
+                    None => Some((candidate_score, candidate.into_node())),
+                    Some((incumbent_score, incumbent)) => {
+                        if incumbent_score < candidate_score {
                             // Replace the old (boundary) score with the objective score
-                            Some(Candidate {
-                                score: objective_score,
-                                ..candidate
-                            })
+                            Some((candidate_score, candidate.into_node()))
                         } else {
-                            Some(incumbent)
+                            Some((incumbent_score, incumbent))
                         }
                     }
                 }
@@ -81,5 +93,5 @@ pub fn solve<Score: Ord, Node: Subproblem<Score = Score>>(initial: Node) -> Opti
         }
     }
 
-    ans.map(|candidate| candidate.node)
+    best.map(|(_, incumbent)| incumbent)
 }
