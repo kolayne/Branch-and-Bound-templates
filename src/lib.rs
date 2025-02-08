@@ -15,7 +15,9 @@ pub enum SubproblemResolution<Node: ?Sized, Score> {
 // type a generic variable rather than a `dyn`
 
 /// Represents a problem (subproblem) to be solved with branch-and-bound
-pub trait Subproblem<Score> {
+pub trait Subproblem {
+    type Score;
+
     /// Evaluates a problem space.
     ///
     /// If the space is to be broken fruther into subproblems, returns
@@ -25,13 +27,13 @@ pub trait Subproblem<Score> {
     /// If the space consists of just one feasible solution to be solved
     /// directly, returns the score, which is the value of the objective
     /// function at the solution.
-    fn branch_or_evaluate(&self) -> SubproblemResolution<Self, Score>;
+    fn branch_or_evaluate(&self) -> SubproblemResolution<Self, Self::Score>;
 
     /// Value of the boundary function at the problem space.
-    fn bound(&self) -> Score;
+    fn bound(&self) -> Self::Score;
 }
 
-pub fn solve<Score: Ord, Node: Subproblem<Score>>(initial: Node) -> Option<Node> {
+pub fn solve<Score: Ord, Node: Subproblem<Score = Score>>(initial: Node) -> Option<Node> {
     let mut ans: Option<Candidate<Node, Score>> = None;
 
     let mut queue = BinaryHeap::new();
@@ -79,5 +81,5 @@ pub fn solve<Score: Ord, Node: Subproblem<Score>>(initial: Node) -> Option<Node>
         }
     }
 
-    ans.and_then(|candidate| Some(candidate.node))
+    ans.map(|candidate| candidate.node)
 }
