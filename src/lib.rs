@@ -1,6 +1,6 @@
-mod candidate;
+pub mod candidate;
 
-use self::candidate::{BoundOrderedCandidate, OrderedCandidate};
+use self::candidate::OrderedCandidate;
 use std::collections::binary_heap::BinaryHeap;
 
 /*
@@ -30,7 +30,7 @@ pub enum SubproblemResolution<Node: ?Sized, Score> {
 
 /// Represents a problem (subproblem) to be solved with branch-and-bound
 pub trait Subproblem {
-    type Score;
+    type Score: Ord;
 
     /// Evaluates a problem space.
     ///
@@ -47,18 +47,25 @@ pub trait Subproblem {
     fn bound(&self) -> Self::Score;
 }
 
-pub fn solve<Score, Node>(initial: Node) -> Option<Node>
+/// Solves the optimization problem specified by the tree that grows
+/// from `initial`.
+///
+/// Uses the generic type `Candidate` to determine the order in which
+/// to visit candidates in the tree.
+pub fn ordered_solve<Node, Candidate>(initial: Node) -> Option<Node>
 where
-    Score: Ord,
-    Node: Subproblem<Score = Score> + 'static,
+    Node: Subproblem + 'static,
+    Candidate: OrderedCandidate<Node = Node>,
 {
     // Best candidate: its objective score and the node itself
-    let mut best: Option<(Score, Node)> = None;
+    let mut best: Option<(Candidate::Score, Node)> = None;
 
     let mut queue = BinaryHeap::new();
-    queue.push(BoundOrderedCandidate::new(initial));
+    queue.push(Candidate::new(initial));
 
     while let Some(candidate) = queue.pop() {
+        // TODO: how to implement early break for a polymorphic `Candidate`?
+        /*
         if let Some((score, _incumbent)) = &best {
             if &candidate.bound() < score {
                 // When a candidate's _bound_ is worse than the incumbent's
@@ -67,6 +74,7 @@ where
                 // TODO: we can only break as easily in the BeFS case
             }
         }
+        */
 
         match candidate.branch_or_evaluate() {
             // Intermediate subproblem
@@ -94,4 +102,28 @@ where
     }
 
     best.map(|(_, incumbent)| incumbent)
+}
+
+pub enum SearchOrder {
+    BestFirst,
+    // TODO: implement depth-first-search
+    //DepthFirst,
+    BreadthFirst,
+}
+
+#[inline]
+pub fn solve<Node: Subproblem + 'static>(initial: Node, order: SearchOrder) -> Option<Node> {
+    use candidate::{BoundOrderedCandidate, DepthOrderedCandidate};
+    use SearchOrder::*;
+
+    match order {
+        BestFirst => ordered_solve::<_, BoundOrderedCandidate<_, _>>(initial),
+        BreadthFirst => ordered_solve::<_, DepthOrderedCandidate<_, _>>(initial),
+        /*
+        DepthFirstSearch => ordered_solve::<_, DepthOrderedCandidate<std::cmp::Reverse<Node>, _>>(
+            std::cmp::Reverse(initial),
+        )
+        .map(|rev| rev.0),
+        */
+    }
 }

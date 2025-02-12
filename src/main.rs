@@ -28,7 +28,7 @@ impl bb::Subproblem for GraphNode {
     }
 }
 
-fn main() {
+fn graph() -> GraphNode {
     let leaf0 = GraphNode {
         bound: 0,
         next: vec![],
@@ -77,5 +77,19 @@ fn main() {
         next: vec![parent1p23, parent0p45],
     };
 
-    println!("Max node: {:#?}", bb::solve(root));
+    root
+}
+
+fn main() {
+    println!("Trying breadth-first search");
+    println!(
+        "Max node: {:#?}",
+        bb::solve(graph(), bb::SearchOrder::BreadthFirst)
+    );
+
+    println!("Now trying best-first search");
+    println!(
+        "Max node: {:#?}",
+        bb::solve(graph(), bb::SearchOrder::BestFirst)
+    );
 }
