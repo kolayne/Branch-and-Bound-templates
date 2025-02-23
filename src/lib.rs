@@ -34,7 +34,7 @@ pub trait Subproblem {
 
     /// Evaluates a problem space.
     ///
-    /// If the space is to be broken fruther into subproblems, returns
+    /// If the space is to be broken further into subproblems, returns
     /// a sequence of subproblems (may be empty, which discards
     /// the current subspace).
     ///
@@ -47,21 +47,23 @@ pub trait Subproblem {
     fn bound(&self) -> Self::Score;
 }
 
-/// Solves the optimization problem specified by the tree that grows
-/// from `initial`.
+/// Solves the optimization problem specified by `initial`.
 ///
-/// Uses the generic type `Candidate` to determine the order in which
-/// to visit candidates in the tree.
-pub fn ordered_solve<Node, Candidate>(initial: Node) -> Option<Node>
+/// Use this function to walk the subproblem tree in a custom order,
+/// determined by the `OrderedCandidateT` generic type parameter.
+///
+/// If you want one of the default orders, use the `solve` function
+/// instead.
+pub fn ordered_solve<Node, OrderedCandidateT>(initial: Node) -> Option<Node>
 where
     Node: Subproblem + 'static,
-    Candidate: OrderedCandidate<Node = Node>,
+    OrderedCandidateT: OrderedCandidate<Node = Node>,
 {
     // Best candidate: its objective score and the node itself
-    let mut best: Option<(Candidate::Score, Node)> = None;
+    let mut best: Option<(OrderedCandidateT::Score, Node)> = None;
 
     let mut queue = BinaryHeap::new();
-    queue.push(Candidate::new(initial));
+    queue.push(OrderedCandidateT::new(initial));
 
     while let Some(candidate) = queue.pop() {
         // TODO: how to implement early break for a polymorphic `Candidate`?
@@ -111,6 +113,11 @@ pub enum SearchOrder {
     BreadthFirst,
 }
 
+/// Solves the optimization problem specified by `initial`.
+///
+/// Walks the subproblem tree in one of the default orders, as determined
+/// by `order`. To walk the tree in a custom order, use the `ordered_solve`
+/// function instead.
 #[inline]
 pub fn solve<Node: Subproblem + 'static>(initial: Node, order: SearchOrder) -> Option<Node> {
     use candidate::{BoundOrderedCandidate, DepthOrderedCandidate};
