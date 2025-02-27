@@ -1,21 +1,6 @@
-pub mod candidate;
+pub mod bnb_aware_containers;
 
-use self::candidate::OrderedCandidate;
-use std::collections::binary_heap::BinaryHeap;
-
-/*
- * There are three similar concepts: Node, Subproblem, and Candidate.
- *
- * `Node` is a type defined by user that must implement `Subproblem`.
- *
- * `Subproblem` (trait) acts as a search space: a `Subproblem` can
- * either break down further into subproblems, or indicate a solution
- * (the value of the objective function). We can also estimate an upper
- * boundary of the solution in the search space.
- *
- * `OrderedCandidate` (trait) wraps a `Node` to add order (a particular order
- * depends on the implementation of the trait).
- */
+use bnb_aware_containers::BnbAwareContainer;
 
 /// Represents the set of subproblems of an intermediate problem
 /// or the value of the objective function of a feasible solution (leaf node).
@@ -47,53 +32,47 @@ pub trait Subproblem {
     fn bound(&self) -> Self::Score;
 }
 
-/// Solves the optimization problem specified by `initial`.
+/// Solve the optimization problem initially specified by subproblem(s) in the `container`.
 ///
-/// Use this function to walk the subproblem tree in a custom order,
-/// determined by the `OrderedCandidateT` generic type parameter.
+/// Until the container is empty, every subproblem in the container is evaluated; when
+/// a subproblem is branched, the generated subnodes are put into the container to be
+/// retrieved later.
 ///
-/// If you want one of the default orders, use the `solve` function
-/// instead.
-pub fn ordered_solve<Node, OrderedCandidateT>(initial: Node) -> Option<Node>
+/// A container is, thus, responsible for the order in which subproblems will be examined,
+/// and can also implement additional features, such as early termination based on
+/// the current best value, early termination based on the number of iterations,
+/// eager or lazy evaluation, etc.
+///
+/// `solve_with_container` should be preferred for advanced use cases (e.g., custom order
+/// or unusual early terination conditions). If you want one of the basic options,
+/// use `solve`.
+fn solve_with_container<Node, Container>(mut container: Container) -> Option<Node>
 where
-    Node: Subproblem + 'static,
-    OrderedCandidateT: OrderedCandidate<Node = Node>,
+    Node: Subproblem,
+    Container: BnbAwareContainer<Node>,
 {
     // Best candidate: its objective score and the node itself
-    let mut best: Option<(OrderedCandidateT::Score, Node)> = None;
+    let mut best: Option<(Node::Score, Node)> = None;
 
-    let mut queue = BinaryHeap::new();
-    queue.push(OrderedCandidateT::new(initial));
+    // `container` should initially contain the root node (or even several nodes)
 
-    while let Some(candidate) = queue.pop() {
-        // TODO: how to implement early break for a polymorphic `Candidate`?
-        /*
-        if let Some((score, _incumbent)) = &best {
-            if &candidate.bound() < score {
-                // When a candidate's _bound_ is worse than the incumbent's
-                // objective score, we don't need to search any further.
-                break;
-                // TODO: we can only break as easily in the BeFS case
-            }
-        }
-        */
-
+    while let Some(candidate) = container.pop_with_incumbent(best.as_ref().map(|x| &x.0)) {
         match candidate.branch_or_evaluate() {
             // Intermediate subproblem
             SubproblemResolution::Branched(subproblems) => {
                 for node in subproblems {
-                    queue.push(node);
+                    container.push_with_incumbent(node, best.as_ref().map(|x| &x.0));
                 }
             }
 
             // Leaf node
             SubproblemResolution::Solved(candidate_score) => {
                 best = match best {
-                    None => Some((candidate_score, candidate.into_node())),
+                    None => Some((candidate_score, candidate)),
                     Some((incumbent_score, incumbent)) => {
                         if incumbent_score < candidate_score {
                             // Replace the old (boundary) score with the objective score
-                            Some((candidate_score, candidate.into_node()))
+                            Some((candidate_score, candidate))
                         } else {
                             Some((incumbent_score, incumbent))
                         }
@@ -106,31 +85,43 @@ where
     best.map(|(_, incumbent)| incumbent)
 }
 
+// TODO: document `SearchOrder` variants in detail.
 pub enum SearchOrder {
     BestFirst,
-    // TODO: implement depth-first-search
-    //DepthFirst,
+    DepthFirst,
     BreadthFirst,
+    // TODO: CustomOrder(Box<dyn FnMut(&Node, &Node) -> std::cmp::Ordering>),
 }
 
-/// Solves the optimization problem specified by `initial`.
+/// Solve the optimization problem specified by `initial`.
 ///
-/// Walks the subproblem tree in one of the default orders, as determined
-/// by `order`. To walk the tree in a custom order, use the `ordered_solve`
-/// function instead.
+/// Walks the subproblem tree in the order specified by `order`, which imply default containers
+/// and default walk strategies (see the docs on `SearchOrder` variants for details).
+///
+/// `solve` should be preferred for simple scenareous (i.e., a single initial node,
+/// one of the default search strategy implementations). For more advanced use cases, use
+/// `solve_with_container`.
 #[inline]
 pub fn solve<Node: Subproblem + 'static>(initial: Node, order: SearchOrder) -> Option<Node> {
-    use candidate::{BoundOrderedCandidate, DepthOrderedCandidate};
     use SearchOrder::*;
 
     match order {
-        BestFirst => ordered_solve::<_, BoundOrderedCandidate<_, _>>(initial),
-        BreadthFirst => ordered_solve::<_, DepthOrderedCandidate<_, _>>(initial),
-        /*
-        DepthFirstSearch => ordered_solve::<_, DepthOrderedCandidate<std::cmp::Reverse<Node>, _>>(
-            std::cmp::Reverse(initial),
-        )
-        .map(|rev| rev.0),
-        */
+        BestFirst => {
+            let pqueue = binary_heap_plus::BinaryHeap::from_vec_cmp(
+                vec![initial],
+                |n1: &Node, n2: &Node| n1.bound().cmp(&n2.bound()),
+            );
+            solve_with_container(pqueue)
+        }
+
+        BreadthFirst => {
+            let queue = std::collections::VecDeque::from_iter([initial]);
+            solve_with_container(queue)
+        }
+
+        DepthFirst => {
+            let stack = vec![initial];
+            solve_with_container(stack)
+        }
     }
 }
