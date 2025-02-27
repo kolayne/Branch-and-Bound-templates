@@ -74,13 +74,19 @@ fn graph() -> GraphNode {
 
     let root = GraphNode {
         bound: 8,
-        next: vec![parent1p23, parent0p45],
+        next: vec![parent0p45, parent1p23],
     };
 
     root
 }
 
 fn main() {
+    println!("Trying depth-first search");
+    println!(
+        "Max node: {:#?}",
+        bb::solve(graph(), bb::SearchOrder::DepthFirst)
+    );
+
     println!("Trying breadth-first search");
     println!(
         "Max node: {:#?}",
