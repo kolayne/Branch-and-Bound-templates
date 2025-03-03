@@ -1,6 +1,6 @@
 pub mod bnb_aware_containers;
 
-use bnb_aware_containers::BnbAwareContainer;
+use bnb_aware_containers::{BinaryHeapExt, BnbAwareContainer};
 
 /// Represents the set of subproblems of an intermediate problem
 /// or the value of the objective function of a feasible solution (leaf node).
@@ -15,6 +15,7 @@ pub enum SubproblemResolution<Node: ?Sized, Score> {
 
 /// Represents a problem (subproblem) to be solved with branch-and-bound
 pub trait Subproblem {
+    // Higher score is better.
     type Score: Ord;
 
     /// Evaluates a problem space.
@@ -85,12 +86,17 @@ where
     best.map(|(_, incumbent)| incumbent)
 }
 
+type NodeCmp<Node> = dyn Fn(&Node, &Node) -> std::cmp::Ordering;
+
 // TODO: document `SearchOrder` variants in detail.
-pub enum SearchOrder {
+pub enum SearchOrder<Node> {
     BestFirst,
     DepthFirst,
     BreadthFirst,
-    // TODO: CustomOrder(Box<dyn FnMut(&Node, &Node) -> std::cmp::Ordering>),
+    Custom {
+        cmp: Box<NodeCmp<Node>>,
+        stop_early: bool,
+    }, // *larger* elements are visited *first*
 }
 
 /// Solve the optimization problem specified by `initial`.
@@ -102,15 +108,26 @@ pub enum SearchOrder {
 /// one of the default search strategy implementations). For more advanced use cases, use
 /// `solve_with_container`.
 #[inline]
-pub fn solve<Node: Subproblem + 'static>(initial: Node, order: SearchOrder) -> Option<Node> {
+pub fn solve<Node: Subproblem>(initial: Node, order: SearchOrder<Node>) -> Option<Node> {
     use SearchOrder::*;
 
     match order {
         BestFirst => {
-            let pqueue = binary_heap_plus::BinaryHeap::from_vec_cmp(
-                vec![initial],
-                |n1: &Node, n2: &Node| n1.bound().cmp(&n2.bound()),
-            );
+            let pqueue = BinaryHeapExt {
+                heap: binary_heap_plus::BinaryHeap::from_vec_cmp(
+                    vec![initial],
+                    |n1: &Node, n2: &Node| n1.bound().cmp(&n2.bound()),
+                ),
+                stop_early: true,
+            };
+            solve_with_container(pqueue)
+        }
+
+        Custom { cmp, stop_early } => {
+            let pqueue = BinaryHeapExt {
+                heap: binary_heap_plus::BinaryHeap::from_vec_cmp(vec![initial], cmp),
+                stop_early,
+            };
             solve_with_container(pqueue)
         }
 

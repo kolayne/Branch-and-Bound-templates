@@ -25,6 +25,33 @@ pub trait BnbAwareContainer<S: Subproblem> {
     fn pop_with_incumbent(&mut self, score: Option<&S::Score>) -> Option<S>;
 }
 
+/// Wrapper around `binary_heap_plus::BinaryHeap`.
+/// Used for best-first search and custom-order search.
+pub(super) struct BinaryHeapExt<Node, Cmp> {
+    /// The node container
+    pub heap: binary_heap_plus::BinaryHeap<Node, Cmp>,
+    /// If `true`, the heap behaves as if in best-first search:
+    /// if the candidate `.bound()` is less than or equal to
+    /// the incumbent's objective score, no more elements will
+    /// be popped, so the algorithm will terminate early.
+    pub stop_early: bool,
+}
+
+// TODO: it  seems like it makes more sense to also create (private)
+// wrapper types for `Vec` and `VecDeque` and implement `BnbAwareContainer`
+// for them rather than the standard containers. I see two reasons for that:
+//
+// 1. This would provide better encapsulation: I see the implementations
+//    of standard search orders as a private implementation detail, however,
+//    a user can now call `solve_with_container` on a vector and it will
+//    work according to an algorithm that we internally implement.
+//
+// 2. This way, it would take less effort for a lazy user to customize
+//    an algorithm: they could just implement `BnbAwareContainer` on a
+//    standard type like `Vec` and have it work, without having to create
+//    a wrapper type (currently, that's not possible because
+//    `BnbAwareContainer`) is already implemented for `Vec`.
+
 /// This implementation for `Vec` is an implementation of the extra-eager strategy:
 /// it checks against the incumbent both when pushing and when popping.
 /// I suppose, it's not efficient!
@@ -68,28 +95,32 @@ impl<S: Subproblem> BnbAwareContainer<S> for std::collections::VecDeque<S> {
     }
 }
 
-/// This implementation for `VecDeque` is an implementation of the extra-eager
+/// This implementation for `BinaryHeapExt` is an implementation of the extra-eager
 /// strategy: it checks against the incumbent both when pushing and when
 /// popping.
 /// We can't remove the lazy evaluation part here (because then BeFS would
 /// make no sense: we want it to terminate early) but the eager part may
 /// be removed, which might make it more efficient.
 /// TODO: analyze this on examples and provide more flexible options.
-impl<S: Subproblem, Cmp: compare::Compare<S>> BnbAwareContainer<S>
-    for binary_heap_plus::BinaryHeap<S, Cmp>
-{
+impl<S: Subproblem, Cmp: compare::Compare<S>> BnbAwareContainer<S> for BinaryHeapExt<S, Cmp> {
     fn push_with_incumbent(&mut self, item: S, score: Option<&<S as Subproblem>::Score>) {
         if score.is_none() || score.unwrap() < &item.bound() {
-            self.push(item);
+            self.heap.push(item);
         }
     }
 
     fn pop_with_incumbent(&mut self, score: Option<&<S as Subproblem>::Score>) -> Option<S> {
         // If the first (i.e., best) item is definitely worse than the current best solution,
         // there's no point in looking any further: the rest of candidates are worse anyway
-        if let Some(item) = self.pop() {
+        while let Some(item) = self.heap.pop() {
             if score.is_none() || score.unwrap() < &item.bound() {
                 return Some(item);
+            }
+
+            // If this candidate is not good enough and `self.stop_early`,
+            // assuming no candidate will be good enough.
+            if self.stop_early {
+                break;
             }
         }
 

@@ -98,4 +98,28 @@ fn main() {
         "Max node: {:#?}",
         bb::solve(graph(), bb::SearchOrder::BestFirst)
     );
+
+    println!("Trying custom-order (should be same as best-first!)");
+    println!(
+        "Max node: {:#?}",
+        bb::solve(
+            graph(),
+            bb::SearchOrder::Custom {
+                cmp: Box::new(|n1, n2| n1.bound.cmp(&n2.bound)),
+                stop_early: true
+            }
+        )
+    );
+
+    println!("Trying custom-order, worst-first search");
+    println!(
+        "Max node: {:#?}",
+        bb::solve(
+            graph(),
+            bb::SearchOrder::Custom {
+                cmp: Box::new(|n1, n2| n2.bound.cmp(&n1.bound)),
+                stop_early: false
+            }
+        )
+    );
 }
