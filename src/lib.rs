@@ -1,6 +1,23 @@
+//! This library implements generic branch-and-bound and backtracking solver.
+//!
+//! Branch-and-bound (and backtracking, which is its special case) is the method
+//! of solving an optimization problem by recursively breaking a problem down
+//! to subproblems and then solving them. Unlike brute-force, branch-and-bound
+//! will discard a subproblem if it discovers that the best potentially obtainable
+//! solution to this subproblem is not better than the current best solution
+//! (aka incumbent).
+//!
+//! To use the library, one shell implement a type that represents a problem
+//! (subproblem) and implement the [`Subproblem`] trait for it.
+//!
+//! One can then [`solve`] an instance of problem using one of the predefined
+//! methods (DFS, BFS, BeFS, etc) or use [`solve_with_container`], through
+//! which custom strategies can be implemented.
+
 pub mod bnb_aware_containers;
 
-use bnb_aware_containers::{BinaryHeapExt, BnbAwareContainer};
+use bnb_aware_containers::BinaryHeapExt;
+pub use bnb_aware_containers::BnbAwareContainer;
 
 /// Represents the set of subproblems of an intermediate problem
 /// or the value of the objective function of a feasible solution (leaf node).
@@ -13,7 +30,7 @@ pub enum SubproblemResolution<Node: ?Sized, Score> {
 // TODO: Consider an alternative implementation by making the iterator
 // type a generic variable rather than a `dyn`
 
-/// Represents a problem (subproblem) to be solved with branch-and-bound
+/// A problem (subproblem) to be solved with branch-and-bound
 pub trait Subproblem {
     // Higher score is better.
     type Score: Ord;
@@ -30,14 +47,25 @@ pub trait Subproblem {
     fn branch_or_evaluate(&self) -> SubproblemResolution<Self, Self::Score>;
 
     /// Value of the boundary function at the problem space.
+    ///
+    /// The boundary function gives an upper-boundary of the best solution
+    /// that could potentially be found in this subproblem space. The value of
+    /// the boundary function must be greater than or equal to every value of
+    /// the objective score of any subproblem reachable through consecutive
+    /// `.branch_or_evaluate` calls.
+    ///
+    /// If at some point in the search process a subproblem's `.bound()` value
+    /// is less than or equal to the current best solution, the subproblem is
+    /// discarded (because no better solution will be found in its subtree).
     fn bound(&self) -> Self::Score;
 }
 
-/// Solve the optimization problem initially specified by subproblem(s) in the `container`.
+/// Solve a problem with branch-and-bound / backtracking using a custom subproblem
+/// container with a custom strategy.
 ///
 /// Until the container is empty, every subproblem in the container is evaluated; when
 /// a subproblem is branched, the generated subnodes are put into the container to be
-/// retrieved later.
+/// retrieved in the following iterations.
 ///
 /// A container is, thus, responsible for the order in which subproblems will be examined,
 /// and can also implement additional features, such as early termination based on
@@ -46,8 +74,8 @@ pub trait Subproblem {
 ///
 /// `solve_with_container` should be preferred for advanced use cases (e.g., custom order
 /// or unusual early terination conditions). If you want one of the basic options,
-/// use `solve`.
-fn solve_with_container<Node, Container>(mut container: Container) -> Option<Node>
+/// use [`solve`].
+pub fn solve_with_container<Node, Container>(mut container: Container) -> Option<Node>
 where
     Node: Subproblem,
     Container: BnbAwareContainer<Node>,
@@ -88,30 +116,74 @@ where
 
 type NodeCmp<Node> = dyn Fn(&Node, &Node) -> std::cmp::Ordering;
 
-// TODO: document `SearchOrder` variants in detail.
-pub enum SearchOrder<Node> {
-    BestFirst,
+/// Order of traversing the subproblem tree with `solve`. See variants' docs for details.
+pub enum TraverseMethod<Node> {
+    /// Depth-first search (DFS): descends into every subtree until reaches the leaf node
+    /// (or determines that a subtree is not worth descending into because the boundary
+    /// value is not better than the incumbent's objective score).
+    ///
+    /// TODO: stabilize and specify the order in which siblings of a certain node are processed,
+    /// so that the user may return nodes in the order of desired processing.
+    ///
+    /// For typical boundary functions, uses significantly less memory compared to best-first
+    /// and breadth-first search.
     DepthFirst,
+
+    /// Breadth-first search (BFS): Traverses the subproblem tree layer by layer.
+    /// The processing order among nodes on the same layer is unspecified.
+    ///
+    /// For typical boundary functions, behaves similar to best-first search but uses
+    /// a simpler internal data structure to store subproblems to be processed.
     BreadthFirst,
+
+    /// Best-first search (BeFS): traverses the tree in many directions simultaneously,
+    /// on every iteration selects and evaluates the subproblem with the best value of
+    /// the boundary function. All its children become candidates for the next selection
+    /// (as long as their boundary value is better than the incumbent's objective score).
+    ///
+    /// The processing order among subproblems with the same boundary value is unspecified.
+    ///
+    /// For typical boundary functions, behaves similar to breadth-first search but selects
+    /// subproblems more optimally.
+    BestFirst,
+
+    /// Like best-first search but selects subproblems in the custom order, based on the
+    /// given comparator `.cmp`.
+    ///
+    /// Processes subproblems in the order specified by `.cmp`: subproblems that compare
+    /// *greater* are processed *first*! The processing order among subproblems that
+    /// compare equal is unspecified.
+    ///
+    /// Set `.cmp_superceeds_bound` to `true` only if `.cmp` guarantees that
+    ///
+    /// if `cmp(subproblem_a, subproblem_b) == Ordering::Less`
+    ///
+    /// then `subproblem_a.bound() < subproblem_b.bound()`
+    ///
+    /// (in other words, the order defined by `.cmp` is a specialized order / super-order
+    /// with respect to the order defined by `Subproblem::bound`).
+    ///
+    /// If `.cmp_superceeds_bound` is set, the search will terminate as soon as the candidate
+    /// that is best according to `.cmp` has the boundary value less (i.e., worse) than that of the
+    /// current incumbent.
     Custom {
         cmp: Box<NodeCmp<Node>>,
-        stop_early: bool,
-    }, // *larger* elements are visited *first*
+        cmp_superceeds_bound: bool,
+    },
 }
 
-/// Solve the optimization problem specified by `initial`.
+/// Solve a problem with branch-and-bound / backtracking, using one of the default strategies.
 ///
-/// Walks the subproblem tree in the order specified by `order`, which imply default containers
-/// and default walk strategies (see the docs on `SearchOrder` variants for details).
+/// Walks the subproblem tree (`initial` is the root) according to the method specified by `method`.
 ///
 /// `solve` should be preferred for simple scenareous (i.e., a single initial node,
 /// one of the default search strategy implementations). For more advanced use cases, use
-/// `solve_with_container`.
+/// [`solve_with_container`].
 #[inline]
-pub fn solve<Node: Subproblem>(initial: Node, order: SearchOrder<Node>) -> Option<Node> {
-    use SearchOrder::*;
+pub fn solve<Node: Subproblem>(initial: Node, method: TraverseMethod<Node>) -> Option<Node> {
+    use TraverseMethod::*;
 
-    match order {
+    match method {
         BestFirst => {
             let pqueue = BinaryHeapExt {
                 heap: binary_heap_plus::BinaryHeap::from_vec_cmp(
@@ -123,7 +195,10 @@ pub fn solve<Node: Subproblem>(initial: Node, order: SearchOrder<Node>) -> Optio
             solve_with_container(pqueue)
         }
 
-        Custom { cmp, stop_early } => {
+        Custom {
+            cmp,
+            cmp_superceeds_bound: stop_early,
+        } => {
             let pqueue = BinaryHeapExt {
                 heap: binary_heap_plus::BinaryHeap::from_vec_cmp(vec![initial], cmp),
                 stop_early,

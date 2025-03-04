@@ -11,17 +11,23 @@ use crate::Subproblem;
 ///    of the incumbent, etc.
 pub trait BnbAwareContainer<S: Subproblem> {
     /// Add `item` to the container.
-    /// `score` is the score of the current incumbent (if any). The
-    /// container may decide not to add an item if it's known to be
+    ///
+    /// `score` is the objective score of the current incumbent (if any).
+    /// The container may decide not to add an item if it's known to be
     /// worse than the incumbent ("eager" evaluation strategy).
     fn push_with_incumbent(&mut self, item: S, score: Option<&S::Score>);
 
     /// Get an item from the container.
-    /// `score` is the score of the current incumbent (if any). The
-    /// container may decide to skip items that are known to be
+    /// `score` is the objective score of the current incumbent (if any).
+    /// The container may decide to skip items that are known to be
     /// worse than the incumbent ("lazy" evaluation strategy).
     ///
-    /// Returns `None` iff the container is exhausted.
+    /// Returns `None` iff the container is exhausted (i.e., there's no more
+    /// feasible subproblems to process).
+    ///
+    /// After `.pop_with_incumbent` returns `None`, the object should not
+    /// be used anymore: calling either `.push_with_incumbent` or
+    /// `.pop_with_incumbent` will have unspecified results.
     fn pop_with_incumbent(&mut self, score: Option<&S::Score>) -> Option<S>;
 }
 

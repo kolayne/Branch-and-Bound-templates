@@ -84,19 +84,19 @@ fn main() {
     println!("Trying depth-first search");
     println!(
         "Max node: {:#?}",
-        bb::solve(graph(), bb::SearchOrder::DepthFirst)
+        bb::solve(graph(), bb::TraverseMethod::DepthFirst)
     );
 
     println!("Trying breadth-first search");
     println!(
         "Max node: {:#?}",
-        bb::solve(graph(), bb::SearchOrder::BreadthFirst)
+        bb::solve(graph(), bb::TraverseMethod::BreadthFirst)
     );
 
     println!("Now trying best-first search");
     println!(
         "Max node: {:#?}",
-        bb::solve(graph(), bb::SearchOrder::BestFirst)
+        bb::solve(graph(), bb::TraverseMethod::BestFirst)
     );
 
     println!("Trying custom-order (should be same as best-first!)");
@@ -104,9 +104,9 @@ fn main() {
         "Max node: {:#?}",
         bb::solve(
             graph(),
-            bb::SearchOrder::Custom {
+            bb::TraverseMethod::Custom {
                 cmp: Box::new(|n1, n2| n1.bound.cmp(&n2.bound)),
-                stop_early: true
+                cmp_superceeds_bound: true
             }
         )
     );
@@ -116,9 +116,9 @@ fn main() {
         "Max node: {:#?}",
         bb::solve(
             graph(),
-            bb::SearchOrder::Custom {
+            bb::TraverseMethod::Custom {
                 cmp: Box::new(|n1, n2| n2.bound.cmp(&n1.bound)),
-                stop_early: false
+                cmp_superceeds_bound: false
             }
         )
     );
