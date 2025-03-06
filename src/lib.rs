@@ -63,8 +63,8 @@ pub trait Subproblem {
 /// Solve a problem with branch-and-bound / backtracking using a custom subproblem
 /// container with a custom strategy.
 ///
-/// Until the container is empty, every subproblem in the container is evaluated; when
-/// a subproblem is branched, the generated subnodes are put into the container to be
+/// Until the container is empty, a subproblem is popped from the container and evaluated;
+/// when a subproblem is branched, the generated subnodes are put into the container to be
 /// retrieved in the following iterations.
 ///
 /// A container is, thus, responsible for the order in which subproblems will be examined,
