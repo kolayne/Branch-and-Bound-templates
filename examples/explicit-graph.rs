@@ -1,3 +1,6 @@
+//! This is a trivial example that does not solve any optimizatino problem,
+//! just walks an explicitly given graph using `branch_and_bound`.
+
 use bb::SubproblemResolution;
 use branch_and_bound as bb;
 
