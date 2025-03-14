@@ -5,6 +5,9 @@ use std::fs::File;
 mod dpll_common;
 use dpll_common::*;
 
+// BUG: fails to find a solution for cnf-sat-samples/aim-50-1_6-yes1-4.cnf,
+//                                   cnf-sat-samples/zebra_v155_c1135.cnf
+
 // TODO: another algorithm to consider (maybe in the other example):
 // this `solve_dfs` never removes clauses, even if they are known to be true.
 // On the one hand, we save time on removing them, on the other hand, we lose

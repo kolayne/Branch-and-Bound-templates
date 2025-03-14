@@ -44,6 +44,7 @@ pub struct CnfSat {
     pub vars_by_frequency: Vec<u32>,
 }
 
+// BUG: fails to parse cnf-sat-samples/par8-1-c.cnf
 pub fn parse_cnf<R: io::Read>(read: R) -> Result<CnfSat, Box<dyn Error>> {
     let mut ans = CnfSat {
         vars_cnt: 0,
