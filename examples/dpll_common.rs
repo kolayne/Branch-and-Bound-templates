@@ -113,6 +113,12 @@ pub fn parse_cnf<R: io::Read>(read: R) -> Result<CnfSat, Box<dyn Error>> {
 
     ans.clauses.reserve(clauses_left);
 
+    // TODO: could implement another heuristic: check if some variable only
+    // appears with the same sign. Then can infer its value outright.
+    //
+    // While a practically useful heuristic, it isn't related to the library
+    // testing, so I don't want to spend time on this.
+
     let mut vars_freq: HashMap<u32, u64> = HashMap::new();
 
     // Now that the problem declaration is parsed, parse the problem itself
@@ -147,4 +153,17 @@ pub fn parse_cnf<R: io::Read>(read: R) -> Result<CnfSat, Box<dyn Error>> {
     ans.vars_by_frequency = vars_freq.into_iter().map(|(v, _f)| v).collect();
 
     Ok(ans)
+}
+
+pub fn assert_solves(problem: &CnfSat, assignments: &[i8]) {
+    for clause in &problem.clauses {
+        match clause.eval(assignments) {
+            ClauseState::Known(true) => {}
+
+            // Using an `assert!` rather than `panic`/`unreachable` because the
+            // intention of this function is to assert.
+            #[allow(clippy::assertions_on_constants)]
+            _ => assert!(false),
+        }
+    }
 }
