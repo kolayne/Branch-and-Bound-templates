@@ -44,7 +44,6 @@ pub struct CnfSat {
     pub vars_by_frequency: Vec<u32>,
 }
 
-// BUG: fails to parse cnf-sat-samples/par8-1-c.cnf
 pub fn parse_cnf<R: io::Read>(read: R) -> Result<CnfSat, Box<dyn Error>> {
     let mut ans = CnfSat {
         vars_cnt: 0,
@@ -125,10 +124,10 @@ pub fn parse_cnf<R: io::Read>(read: R) -> Result<CnfSat, Box<dyn Error>> {
     // Now that the problem declaration is parsed, parse the problem itself
     let mut literals: Vec<i32> = vec![];
     for line in &mut lines {
-        if clauses_left == 0 {
-            return Err(Box::from("Unexpectedly many clauses in the file"));
-        }
         for word in line?.split_whitespace() {
+            if clauses_left == 0 {
+                return Err(Box::from("Unexpectedly many clauses in the file"));
+            }
             match word.parse() {
                 Ok(0) => {
                     clauses_left -= 1;
@@ -163,6 +162,8 @@ pub fn assert_solves(problem: &CnfSat, assignments: &[i8]) {
 
             // Using an `assert!` rather than `panic`/`unreachable` because the
             // intention of this function is to assert.
+            //
+            // Note: `assert!` does not get optimized out, unlike `debug_assert!`.
             #[allow(clippy::assertions_on_constants)]
             _ => assert!(false),
         }
