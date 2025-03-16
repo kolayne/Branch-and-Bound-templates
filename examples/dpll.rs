@@ -1,4 +1,4 @@
-use std::{env, error::Error, fs::File, rc::Rc};
+use std::{error::Error, rc::Rc};
 
 use branch_and_bound::{Subproblem, SubproblemResolution};
 
@@ -99,23 +99,5 @@ fn solve(parsed: &CnfSat) -> Option<Vec<i8>> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        return Err(Box::from(
-            "Expected filename as the (only) command-line argument",
-        ));
-    }
-
-    let f = File::open(&args[1])?;
-    let problem = parse_cnf(f)?;
-
-    match solve(&problem) {
-        None => println!("No solution"),
-        Some(assignments) => {
-            println!("Found solution!\n{:#?}", &assignments[1..]);
-            assert_solves(&problem, &assignments);
-        }
-    }
-
-    Ok(())
+    examples_main()
 }

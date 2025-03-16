@@ -1,6 +1,4 @@
-use std::env;
 use std::error::Error;
-use std::fs::File;
 
 mod dpll_common;
 use dpll_common::*;
@@ -98,23 +96,5 @@ fn solve(problem: &CnfSat) -> Option<Vec<i8>> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        return Err(Box::from(
-            "Expected filename as the (only) command-line argument",
-        ));
-    }
-
-    let f = File::open(&args[1])?;
-    let problem = parse_cnf(f)?;
-
-    match solve(&problem) {
-        None => println!("No solution"),
-        Some(assignments) => {
-            println!("Found solution!\n{:#?}", &assignments[1..]);
-            assert_solves(&problem, &assignments);
-        }
-    }
-
-    Ok(())
+    examples_main()
 }

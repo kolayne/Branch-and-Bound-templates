@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
-use std::io;
+use std::{env, io};
 
 #[derive(Clone)]
 pub struct Clause {
@@ -174,6 +174,28 @@ pub fn assert_solves(problem: &CnfSat, assignments: &[i8]) {
             _ => assert!(false),
         }
     }
+}
+
+pub fn examples_main() -> Result<(), Box<dyn Error>> {
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        return Err(Box::from(
+            "Expected filename as the (only) command-line argument",
+        ));
+    }
+
+    let f = File::open(&args[1])?;
+    let problem = parse_cnf(f)?;
+
+    match super::solve(&problem) {
+        None => println!("No solution"),
+        Some(assignments) => {
+            println!("Found solution!\n{:#?}", &assignments[1..]);
+            assert_solves(&problem, &assignments);
+        }
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
