@@ -3,6 +3,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io;
 
+#[derive(Clone)]
 pub struct Clause {
     literals: Vec<i32>,
 }
@@ -149,8 +150,12 @@ pub fn parse_cnf<R: io::Read>(read: R) -> Result<CnfSat, Box<dyn Error>> {
     // If there are vars in the formula that are never used as literals, they haven't made it
     // into `vars_freq`. That's okay: the solver will terminate as soon as the formula is decided.
 
+    // Note: the order of traversal of elements of a `HashMap` is undeterminate. When measuring
+    // performance, you might want to use a deterministic comparator (uncomment below).
+    // It also seems like there are some lucky orders and there may be good heuristics to find them
+    // but that's not my goal, so I'm not implementing this.
     let mut vars_freq: Vec<(u32, u64)> = vars_freq.into_iter().collect();
-    vars_freq.sort_by(|(_v1, f1), (_v2, f2)| f2.cmp(f1));
+    vars_freq.sort_by(|(_v1, f1), (_v2, f2)| /*if f1 == f2 { _v1.cmp(_v2) } else*/ { f2.cmp(f1) });
     ans.vars_by_frequency = vars_freq.into_iter().map(|(v, _f)| v).collect();
 
     Ok(ans)
