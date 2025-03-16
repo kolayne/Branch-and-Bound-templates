@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 use std::error::Error;
+use std::fs::File;
 use std::io;
 
 pub struct Clause {
-    pub literals: Vec<i32>,
+    literals: Vec<i32>,
 }
 
 pub enum ClauseState {
@@ -160,7 +161,7 @@ pub fn assert_solves(problem: &CnfSat, assignments: &[i8]) {
         match clause.eval(assignments) {
             ClauseState::Known(true) => {}
 
-            // Using an `assert!` rather than `panic`/`unreachable` because the
+            // Using an `assert!` rather than `panic!`/`unreachable!` because the
             // intention of this function is to assert.
             //
             // Note: `assert!` does not get optimized out, unlike `debug_assert!`.
@@ -168,4 +169,81 @@ pub fn assert_solves(problem: &CnfSat, assignments: &[i8]) {
             _ => assert!(false),
         }
     }
+}
+
+#[cfg(test)]
+fn open_sample_problem(name: &str) -> Result<CnfSat, Box<dyn Error>> {
+    let path = format!("examples/cnf-sat-samples/{name}.cnf");
+    Ok(parse_cnf(File::open(path)?)?)
+}
+
+#[test]
+fn test_simple_cnf() -> Result<(), Box<dyn Error>> {
+    let problem = open_sample_problem("simple")?;
+    assert_solves(&problem, &super::solve(&problem).unwrap());
+    Ok(())
+}
+
+#[test]
+fn test_quinn_cnf() -> Result<(), Box<dyn Error>> {
+    let problem = open_sample_problem("quinn")?;
+    assert_solves(&problem, &super::solve(&problem).unwrap());
+    Ok(())
+}
+
+#[test]
+fn test_hole6_cnf() -> Result<(), Box<dyn Error>> {
+    let problem = open_sample_problem("hole6")?;
+    assert!(super::solve(&problem).is_none());
+    Ok(())
+}
+
+#[test]
+fn test_par8_1_c_cnf() -> Result<(), Box<dyn Error>> {
+    let problem = open_sample_problem("par8-1-c")?;
+    assert_solves(&problem, &super::solve(&problem).unwrap());
+    Ok(())
+}
+
+#[test]
+fn test_dubois20_cnf() -> Result<(), Box<dyn Error>> {
+    let problem = open_sample_problem("dubois20")?;
+    assert!(super::solve(&problem).is_none());
+    Ok(())
+}
+
+#[test]
+fn test_dubois21_cnf() -> Result<(), Box<dyn Error>> {
+    let problem = open_sample_problem("dubois21")?;
+    assert!(super::solve(&problem).is_none());
+    Ok(())
+}
+
+#[test]
+fn test_dubois22_cnf() -> Result<(), Box<dyn Error>> {
+    let problem = open_sample_problem("dubois22")?;
+    assert!(super::solve(&problem).is_none());
+    Ok(())
+}
+
+#[test]
+fn test_zebra_v155_c1135_cnf() -> Result<(), Box<dyn Error>> {
+    let problem = open_sample_problem("zebra_v155_c1135")?;
+    assert_solves(&problem, &super::solve(&problem).unwrap());
+    Ok(())
+}
+
+#[test]
+fn test_aim_50_1_6_yes1_4_cnf() -> Result<(), Box<dyn Error>> {
+    let problem = open_sample_problem("aim-50-1_6-yes1-4")?;
+    assert_solves(&problem, &super::solve(&problem).unwrap());
+    Ok(())
+}
+
+#[ignore] // Takes too long. I have never seen it finish.
+#[test]
+fn test_aim_100_1_6_no_1() -> Result<(), Box<dyn Error>> {
+    let problem = open_sample_problem("aim-100-1_6-no-1")?;
+    assert!(super::solve(&problem).is_none());
+    Ok(())
 }
