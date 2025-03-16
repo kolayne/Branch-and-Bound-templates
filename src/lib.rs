@@ -32,7 +32,8 @@ pub enum SubproblemResolution<Node: ?Sized, Score> {
 
 /// A problem (subproblem) to be solved with branch-and-bound
 pub trait Subproblem {
-    // Higher score is better.
+    /// Return type of the boundary and the objective function.
+    /// Higher score is better.
     type Score: Ord;
 
     /// Evaluates a problem space.
@@ -43,8 +44,8 @@ pub trait Subproblem {
     ///
     /// If the space consists of just one feasible solution to be solved
     /// directly, returns the score, which is the value of the objective
-    /// function at the solution.
-    fn branch_or_evaluate(&self) -> SubproblemResolution<Self, Self::Score>;
+    /// function at the solution. The node is then considered a successful candidate.
+    fn branch_or_evaluate(&mut self) -> SubproblemResolution<Self, Self::Score>;
 
     /// Value of the boundary function at the problem space.
     ///
@@ -85,7 +86,7 @@ where
 
     // `container` should initially contain the root node (or even several nodes)
 
-    while let Some(candidate) = container.pop_with_incumbent(best.as_ref().map(|x| &x.0)) {
+    while let Some(mut candidate) = container.pop_with_incumbent(best.as_ref().map(|x| &x.0)) {
         match candidate.branch_or_evaluate() {
             // Intermediate subproblem
             SubproblemResolution::Branched(subproblems) => {

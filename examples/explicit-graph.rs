@@ -13,7 +13,7 @@ struct GraphNode {
 impl bb::Subproblem for GraphNode {
     type Score = i32;
 
-    fn branch_or_evaluate(&self) -> branch_and_bound::SubproblemResolution<GraphNode, i32> {
+    fn branch_or_evaluate(&mut self) -> branch_and_bound::SubproblemResolution<GraphNode, i32> {
         if self.bound < 5 {
             eprintln!("I should not be visited in Best-First-Search");
         } else {
