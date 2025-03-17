@@ -1,9 +1,10 @@
 [package]
 name = "branch-and-bound"
 description = "Branch and Bound / Backtracking algorithms generic template library"
-version = "0.3.0-dirty"
+version = "0.3.1"
 edition = "2021"
-license = "MIT AND LGPL-3.0-only"
+license = "MIT"
+exclude = ["examples/cnf-sat-samples/*"]
 repository = "https://github.com/kolayne/Branch-and-Bound-templates"
 readme = "README.md"
 
