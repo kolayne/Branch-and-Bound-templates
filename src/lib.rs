@@ -32,6 +32,13 @@ pub enum SubproblemResolution<Node: ?Sized, Score> {
 
 /// A problem (subproblem) to be solved with branch-and-bound
 pub trait Subproblem {
+    // Major TODO: Let `Subproblem` have a non-static lifetime. This will simplify
+    // usage of the library a lot.
+    //
+    // Major major TODO: Allow `Subproblem` to return its children one by one,
+    // rather than all at a time. This way, DFS could be implemented efficiently
+    // by the users of the library.
+
     /// Return type of the boundary and the objective function.
     /// Higher score is better.
     type Score: Ord;
