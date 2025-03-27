@@ -52,6 +52,15 @@ pub trait Subproblem {
     /// If the space consists of just one feasible solution to be solved
     /// directly, returns the score, which is the value of the objective
     /// function at the solution. The node is then considered a successful candidate.
+    ///
+    /// The method may mutate `self` as follows:
+    /// - If `SubproblemResolution::Branched` is returned, the library shall
+    ///   discard the object after that, so any changes to `self` are allowed, even
+    ///   if after the changes it no longer represents the original subproblem;
+    /// - If `SubproblemResolution::Solved` is returned, the library will use
+    ///   the subproblem object as a successful candidate, so mutations to the internal
+    ///   state are allowed, as long as `self` continues to represent the same
+    ///   subproblem.
     fn branch_or_evaluate(&mut self) -> SubproblemResolution<Self, Self::Score>;
 
     /// Value of the boundary function at the problem space.
