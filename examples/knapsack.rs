@@ -3,6 +3,9 @@ use branch_and_bound::{Subproblem, SubproblemResolution};
 mod knapsack_common;
 use knapsack_common::*;
 
+#[cfg(test)]
+mod knapsack_samples;
+
 impl Subproblem for KnapsackSubproblem {
     type Score = u32;
 
@@ -49,6 +52,22 @@ impl Subproblem for KnapsackSubproblem {
     }
 }
 
+fn solve(problem: KnapsackSubproblem) -> Option<KnapsackSubproblem> {
+    branch_and_bound::solve(problem, branch_and_bound::TraverseMethod::BestFirst)
+}
+
 fn main() {
-    todo!();
+    let i = |w, p| Item {
+        weight: w,
+        price: p,
+    };
+
+    // Just an arbitrary example I made up
+    let problem = KnapsackSubproblem::new(9, vec![i(6, 5), i(1, 1), i(2, 2), i(4, 4)]);
+
+    if let Some(packed) = solve(problem) {
+        println!("Solved: {:#?}", packed.into_items());
+    } else {
+        println!("No solution!");
+    }
 }

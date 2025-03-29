@@ -4,7 +4,7 @@ description = "Branch and Bound / Backtracking algorithms generic template libra
 version = "0.3.1-dirty"
 edition = "2021"
 license = "MIT"
-exclude = ["examples/cnf-sat-samples/*"]
+exclude = ["examples/cnf-sat-samples/*", "examples/knapsack_samples/*"]
 repository = "https://github.com/kolayne/Branch-and-Bound-templates"
 readme = "README.md"
 

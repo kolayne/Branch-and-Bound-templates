@@ -1,4 +1,4 @@
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Item {
     pub price: u32,
     pub weight: u32,
@@ -97,4 +97,18 @@ impl KnapsackSubproblem {
     pub fn into_items(self) -> Vec<Item> {
         self.items_in
     }
+}
+
+#[cfg(test)]
+use super::knapsack_samples as samples;
+#[cfg(test)]
+use std::collections::HashSet;
+
+#[test]
+fn fsu_test_1() {
+    let problem = KnapsackSubproblem::new(samples::capacity1, samples::items1());
+    let solution = super::solve(problem).unwrap().into_items();
+    let solution = HashSet::<Item>::from_iter(solution.into_iter());
+    let expected = samples::expected1();
+    assert_eq!(solution, expected);
 }

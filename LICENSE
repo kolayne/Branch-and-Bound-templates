@@ -1,7 +1,7 @@
 This project is distributed under the MIT license (see LICENSE.mit),
-except for the .cnf sample files taken from
-https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html, which are distrubted under
-LGPLv3 (see examples/cnf-sat-samples/gnu_lgpl.txt).
+except for the sample input files located under
+examples/cnf-sat-samples/ and examples/knapsack_samples/
+, which are distrubted under LGPLv3 (see examples/cnf-sat-samples/gnu_lgpl.txt).
 
-Unless noted otherwise at the top of a file, it is distributed under
-the MIT license.
+Every file distributed under a license other than MIT shall have a corresponding
+comment at the top of it.
