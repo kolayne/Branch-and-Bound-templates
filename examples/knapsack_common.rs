@@ -100,15 +100,55 @@ impl KnapsackSubproblem {
 }
 
 #[cfg(test)]
-use super::knapsack_samples as samples;
-#[cfg(test)]
-use std::collections::HashSet;
+mod test {
+    use super::super::knapsack_samples as samples;
+    use super::*;
+    use std::collections::HashSet;
 
-#[test]
-fn fsu_test_1() {
-    let problem = KnapsackSubproblem::new(samples::capacity1, samples::items1());
-    let solution = super::solve(problem).unwrap().into_items();
-    let solution = HashSet::<Item>::from_iter(solution.into_iter());
-    let expected = samples::expected1();
-    assert_eq!(solution, expected);
+    fn run_test(capacity: u32, items: Vec<Item>, expected: HashSet<Item>) {
+        let problem = KnapsackSubproblem::new(capacity, items);
+        let solution = super::super::solve(problem).unwrap().into_items();
+        let solution = HashSet::<Item>::from_iter(solution.into_iter());
+        assert_eq!(solution, expected);
+    }
+
+    #[test]
+    fn fsu_test_1() {
+        run_test(samples::capacity1, samples::items1(), samples::expected1());
+    }
+
+    #[test]
+    fn fsu_test_2() {
+        run_test(samples::capacity2, samples::items2(), samples::expected2());
+    }
+
+    #[test]
+    fn fsu_test_3() {
+        run_test(samples::capacity3, samples::items3(), samples::expected3());
+    }
+
+    #[test]
+    fn fsu_test_4() {
+        run_test(samples::capacity4, samples::items4(), samples::expected4());
+    }
+
+    #[test]
+    fn fsu_test_5() {
+        run_test(samples::capacity5, samples::items5(), samples::expected5());
+    }
+
+    #[test]
+    fn fsu_test_6() {
+        run_test(samples::capacity6, samples::items6(), samples::expected6());
+    }
+
+    #[test]
+    fn fsu_test_7() {
+        run_test(samples::capacity7, samples::items7(), samples::expected7());
+    }
+
+    #[test]
+    fn fsu_test_8() {
+        run_test(samples::capacity8, samples::items8(), samples::expected8());
+    }
 }
