@@ -7,7 +7,7 @@ use knapsack_common::*;
 mod knapsack_samples;
 
 impl Subproblem for KnapsackSubproblem {
-    type Score = u32;
+    type Score = u64;
 
     fn branch_or_evaluate(&mut self) -> SubproblemResolution<Self, Self::Score> {
         if self.capacity_left() == 0 {

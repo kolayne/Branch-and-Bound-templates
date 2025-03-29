@@ -7,13 +7,13 @@ use std::collections::HashSet;
 
 use super::Item;
 
-const fn i(weight: u32, price: u32) -> Item {
+const fn i(weight: u64, price: u64) -> Item {
     Item { weight, price }
 }
 
 // P01
 
-pub const capacity1: u32 = 165;
+pub const capacity1: u64 = 165;
 
 pub fn items1() -> Vec<Item> {
     vec![
@@ -43,7 +43,7 @@ pub fn expected1() -> HashSet<Item> {
 
 // P02
 
-pub const capacity2: u32 = 26;
+pub const capacity2: u64 = 26;
 
 pub fn items2() -> Vec<Item> {
     vec![i(12, 24), i(7, 13), i(11, 23), i(8, 15), i(9, 16)]
@@ -56,7 +56,7 @@ pub fn expected2() -> HashSet<Item> {
 
 // P03
 
-pub const capacity3: u32 = 190;
+pub const capacity3: u64 = 190;
 
 pub fn items3() -> Vec<Item> {
     vec![
@@ -76,7 +76,7 @@ pub fn expected3() -> HashSet<Item> {
 
 // P04
 
-pub const capacity4: u32 = 50;
+pub const capacity4: u64 = 50;
 
 pub fn items4() -> Vec<Item> {
     vec![
@@ -97,7 +97,7 @@ pub fn expected4() -> HashSet<Item> {
 
 // P05
 
-pub const capacity5: u32 = 104;
+pub const capacity5: u64 = 104;
 
 pub fn items5() -> Vec<Item> {
     vec![
@@ -126,7 +126,7 @@ pub fn expected5() -> HashSet<Item> {
 
 // P06
 
-pub const capacity6: u32 = 170;
+pub const capacity6: u64 = 170;
 
 pub fn items6() -> Vec<Item> {
     vec![
@@ -147,7 +147,7 @@ pub fn expected6() -> HashSet<Item> {
 
 // P07
 
-pub const capacity7: u32 = 750;
+pub const capacity7: u64 = 750;
 
 pub fn items7() -> Vec<Item> {
     vec![
@@ -185,7 +185,7 @@ pub fn expected7() -> HashSet<Item> {
 
 // P08
 
-pub const capacity8: u32 = 6404180;
+pub const capacity8: u64 = 6404180;
 
 pub fn items8() -> Vec<Item> {
     vec![

@@ -1,15 +1,15 @@
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Item {
-    pub price: u32,
-    pub weight: u32,
+    pub price: u64,
+    pub weight: u64,
 }
 
 #[derive(Clone)]
 pub struct KnapsackSubproblem {
     /// Value currently acquired by the knapsack
-    val: u32,
+    val: u64,
     /// Capacity left in the knapsack
-    capacity_left: u32,
+    capacity_left: u64,
     /// Items to try to put (sorted by the `.price/.weight` ratio in ascending order).
     ///
     /// Internal invariant: if not empty, the last item's weight must be less than capacity
@@ -27,7 +27,7 @@ impl KnapsackSubproblem {
     /// better items to be included earlier.
     ///
     /// Note: items with weight exceeding capacity are never kept in `KnapsackProblem`.
-    pub fn new(capacity: u32, items: Vec<Item>) -> Self {
+    pub fn new(capacity: u64, items: Vec<Item>) -> Self {
         let mut res = Self {
             val: 0,
             capacity_left: capacity,
@@ -74,11 +74,11 @@ impl KnapsackSubproblem {
         !self.items_left.is_empty()
     }
 
-    pub fn capacity_left(&self) -> u32 {
+    pub fn capacity_left(&self) -> u64 {
         self.capacity_left
     }
 
-    pub fn collected_val(&self) -> u32 {
+    pub fn collected_val(&self) -> u64 {
         self.val
     }
 
@@ -105,7 +105,7 @@ mod test {
     use super::*;
     use std::collections::HashSet;
 
-    fn run_test(capacity: u32, items: Vec<Item>, expected: HashSet<Item>) {
+    fn run_test(capacity: u64, items: Vec<Item>, expected: HashSet<Item>) {
         let problem = KnapsackSubproblem::new(capacity, items);
         let solution = super::super::solve(problem).unwrap().into_items();
         let solution = HashSet::<Item>::from_iter(solution.into_iter());
