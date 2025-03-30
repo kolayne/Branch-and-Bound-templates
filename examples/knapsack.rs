@@ -3,7 +3,7 @@ use branch_and_bound::{Subproblem, SubproblemResolution};
 mod knapsack_common;
 use knapsack_common::*;
 
-impl Subproblem for Knapsack {
+impl Subproblem for KnapsackSubproblem {
     type Score = u32;
 
     fn branch_or_evaluate(&mut self) -> SubproblemResolution<Self, Self::Score> {
@@ -15,7 +15,7 @@ impl Subproblem for Knapsack {
             let mut child_include = self.clone();
             child_include.include_next();
 
-            let dummy = Knapsack::new(0, vec![]);
+            let dummy = KnapsackSubproblem::new(0, vec![]);
             let mut child_exclude = std::mem::replace(self, dummy); // Avoid copying: reuse `self`
             child_exclude.drop_next();
 

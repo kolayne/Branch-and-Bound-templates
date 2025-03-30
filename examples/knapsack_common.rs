@@ -5,7 +5,7 @@ pub struct Item {
 }
 
 #[derive(Clone)]
-pub struct Knapsack {
+pub struct KnapsackSubproblem {
     /// Value currently acquired by the knapsack
     val: u32,
     /// Capacity left in the knapsack
@@ -20,7 +20,13 @@ pub struct Knapsack {
     items_in: Vec<Item>,
 }
 
-impl Knapsack {
+impl KnapsackSubproblem {
+    /// Creates a knapsack with `items` to be inserted.
+    ///
+    /// Items will be sorted according to their `.price / .weight` ratio,
+    /// better items to be included earlier.
+    ///
+    /// Note: items with weight exceeding capacity are never kept in `KnapsackProblem`.
     pub fn new(capacity: u32, items: Vec<Item>) -> Self {
         let mut res = Self {
             val: 0,
@@ -46,12 +52,15 @@ impl Knapsack {
         }
     }
 
+    /// Drops the next item that could have been included.
     pub fn drop_next(&mut self) {
         debug_assert!(!self.items_left.is_empty());
         self.items_left.pop();
         self.pop_too_heavy();
     }
 
+    /// Includes the next item to be included. Drops items
+    /// with weight exceeding the new capacity left.
     pub fn include_next(&mut self) {
         debug_assert!(!self.items_left.is_empty());
         let item = self.items_left.last().unwrap();
@@ -75,7 +84,8 @@ impl Knapsack {
 
     /// Future items to be included, in the order they may be included
     /// (i.e., descending order of the `.price / .weight` ratio).
-    /// Elements with weight exceeding capacity are excluded.
+    ///
+    /// Note: items with weight exceeding capacity are never kept in `KnapsackProblem`.
     pub fn future_items(&self) -> impl Iterator<Item = &Item> {
         self.items_left
             .iter()
@@ -83,7 +93,7 @@ impl Knapsack {
             .filter(|item| item.weight <= self.capacity_left)
     }
 
-    /// Converts a `Knapsack` into the set of items that are in the knapsack.
+    /// Converts a `KnapsackSubproblem` into the set of items that are in the knapsack.
     pub fn into_items(self) -> Vec<Item> {
         self.items_in
     }
