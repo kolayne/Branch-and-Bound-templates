@@ -1,6 +1,7 @@
 \documentclass[oneside,final,14pt,a4paper]{extreport}
 
 \usepackage{tempora} % Times New Roman alike font
+\usepackage[color={red!100!green!33},textwidth=3cm,obeyFinal]{todonotes}
 
 \usepackage{vmargin}
 \setpapersize{A4}
@@ -74,7 +75,7 @@
 \newcommand\tab[1]{(Tab. \ref{#1})} %Ref on table
 
 \setlength{\headheight}{32.0976pt}
-\usepackage{enumitem}
+\usepackage[shortlabels]{enumitem}
 \newlist{inlinelist}{enumerate*}{1}
 \setlist*[inlinelist,1]{%
   label=(\arabic*),
@@ -119,6 +120,12 @@
      
    \begin{flushleft}\raggedleft #1\end{flushleft}
 }
+
+\if@todonotes@disabled
+\newcommand{\hlfix}[2]{#1}
+\else
+\newcommand{\hlfix}[2]{\hl{#1}\todo{#2}}
+\fi
 
 \begin{document}
 

@@ -1,6 +1,291 @@
 \chapter{Literature Review}
 \label{chap:lr}
 
+\section{Questions}
+
+LRQ\#1: What does the scientific community understand by branch-and-bound and backtracking methods?
+What are the parts common to all branch-and-bound-based and backtracking-based algorithms?
+Which parts of the the algorithms vary from problem to problem? \\
+
+LRQ\#2: What were the previous attempts to formalize branch-and-bound and backtracking methods
+and algorithms based on them? \\
+
+LRQ\#3: What are ways in which these algorithms can be or are commonly implemented? \\
+
+\section{Searching procedure}
+
+For each question, I searched for articles in ScienceDirect,
+Google Scholar, and ResearchGate, combining the following keywords to form search queries
+for my questions:
+
+\begin{itemize}
+    \item Backtracking (method)
+    \item Branch and bound (method)
+    \item General / Generic (LRQ\#2)
+    \item Formal / Formalization / Verification (LRQ\#2)
+\end{itemize}
+
+\section{Answers to the questions}
+
+\subsection{LRQ\#1: Understanding backtracking and branch-and-bound}
+
+\subsubsection{Branch \& Bound method}
+
+In the most general case studied in \cite{clausen1999principles}, \textbf{Branch \& Bound (B\&B)}
+algorithms solve optimization problems, that is, minimize an \emph{objective function} in the
+\emph{feasible solution space}, which is limited by constraints. To do this, B\&B algorithms
+implement a search of a "dynamically developed" (lazily-generated) graph
+(also referred to as \emph{virtual graph}
+    \cite{shilov2011rutemplateverif} \cite{shilov2012verifmono}),
+which acts as a search tree, where every node represents a subproblem derived from the
+original problem through addition of constraints.
+
+Initially, the tree consists of just the root node, which represents the original problem.
+On every iteration, a node is extracted from the set of \emph{live nodes}.
+It is then evaluated: the subproblem is broken down to
+two \cite{narkawicz2013formalnasa} or more \cite{clausen1999principles}
+subproblems according to a
+\emph{branching rule}, new nodes become children of the evaluated node and are added
+to the set of live nodes. The \emph{bounding function} is evaluated for nodes in
+consideration: if the value of the bounding function at the candidate node is greater than
+or equal to (i.e., not better than) the value of the objective function at the current
+best solution (\emph{incumbent}), the candidate can be discarded without descending into
+its subtree, as its solution space can not contain a solution better than the incumbent
+(due to properties of the bounding function, discussed below).
+
+When a subproblem can not be broken down further, the objective function is evaluated at
+it and compared to the objective function at the incumbent, and the best one is kept.
+
+\subsubsection{Problem-specific parts of B\&B}
+
+While the core part of walking the search tree is common to all the B\&B algorithms,
+there are parts that depend on a concrete problem that an algorithm is solving.
+
+For clarity, I will discuss these parts along with the example of the Sudoku solving
+B\&B-based algorithm \cite{indriyono2024sudoku}. Every node of the solution tree
+in the example represents a partially filled Sudoku board.
+
+Following the terminology of \cite{clausen1999principles}:
+
+\begin{itemize}
+    \item \emph{Objective function} is a function of a feasible solution. The algorithm shall
+        minimize it.
+        Objective function can be evaluated for a concrete solution
+        (represented in the tree with a leaf node) rather than a solution space. \\
+        As in Sudoku there is no "worse" or "better" solutions, only valid or invalid ones,
+        we could define a fairly straightforward objective function that is equal to
+        $1$ for a valid solution and $2$ for an invalid solution (as less is better).
+
+    \item \emph{Root node} represents the original problem to be solved. \\
+        In the Sudoku example,
+        the root node represents the pre-filled Sudoku board, as given initially;
+        pre-filled values are the initial constraints.
+
+    \item \emph{Branching rule} is a rule of (function that defines) how to break down a subproblem
+        into further subproblems (i.e., generate descendants of a node). \\
+        The following shall hold for a branching rule to be valid:
+        \begin{enumerate}[(a)]
+        \item solution space of the parent node shall be equal to the union of solution spaces of its
+            direct descendants, and
+        \item solution spaces of sibling nodes shall not intersect (i.e.,
+            constraints imposed on different descendants shall be mutually exclusive).
+        \end{enumerate}
+
+        In the Sudoku example, one branching rule idea is to select an empty cell
+        and try to insert every possible digit (1-9) in it, thus creating 9 descendants of a node.
+        If the Sudoku board in a node does not have any empty cells, no further branching is possible,
+        and that node is a leaf node.
+
+    \item \emph{Bounding function} is a computationally-cheap function of a solution subspace
+        that estimates the best potentially achievable solution in that
+        subspace. \\
+        The following shall hold for a bounding function $g$ to be valid:
+        \begin{enumerate}[(a)]
+            \item Bounding function is no worse than the objective function $f$:
+                \[
+                g(\{X\}) \leq f(X) \:\text{for any feasible solution}\: X
+                \]
+            \item Narrowing solution space down shall not improve the best solution estimate:
+                \[
+                g(S) \leq g(S') \:\text{for}\: S \supseteq S'
+                \]
+                or, equivalently
+                \[
+                \forall S, T: g(S \cup T) \leq \min(g(S), g(T))
+                \]
+        \end{enumerate}
+
+        In the Sudoku example, the bounding function will be used merely to discard subtrees
+        in which we can never find a solution (i.e., rule out partial solutions where the
+        pre-filled part is already invalid). Thus, we could define
+        the bounding function to be equal to $1$ if the partially filled board is valid and $2$
+        otherwise.
+
+        In the Sudoku example, the bounding function happens to be very similar to the objective
+        function; in more advanced optimization problems, a more sophisticated bounding
+        function would be useful.
+
+    \item \emph{Selection strategy} is a strategy according to which a live node is selected
+        at the beginning of every iteration (a-la the walk order of the virtual graph). \\
+        Common selection strategies are:
+        \begin{itemize}
+            \item Breadth-first search (BFS) evaluates nodes of the tree layer by layer;
+            \item Best-first search (BeFS) greedily selects a node with the lowest value of the
+                bounding function out of the live nodes;
+            \item Depth-first search (DFS) walks the tree in a DFS manner.
+        \end{itemize}
+
+        For many optimization problems, it makes sense to use BFS or BeFS to arrive at the best
+        solution earlier (discard more solution spaces without descending into subtrees).
+        For the Sudoku example, however, it would not benefit the performance, as the bounding
+        function conveys too little information about the solution subspace, so it is more efficient
+        to use DFS as the most memory-efficient option.
+
+    \item \emph{Evaluation strategy}, either \emph{eager} or \emph{lazy}, affects when the
+        algorithm compares candidate nodes against the incumbent to potentially discard them:
+        \begin{itemize}
+            \item With \emph{eager} evaluation, a selected live node is first \emph{branched}
+                (i.e., split into subproblems), then
+                new nodes are compared against the incumbent and are only inserted into the set
+                of live nodes if they have the potential to produce a better solution
+                (discarded otherwise);
+            \item With \emph{lazy} evaluation, a node selected from live nodes is first compared
+                with the incumbent (and can be discarded at this point), then branched,
+                and the descendant nodes are inserted to the set of live nodes unconditionally.
+                \todo{(Nechaev) but what if we combine eager+lazy into an "aggressive" strategy:
+                    evaluate both on insert and on extraction? - (Shilov) It makes sense, of course, but should be named "joint" rather than "aggressive".}
+        \end{itemize}
+\end{itemize}
+
+\subsubsection{Backtracking and other special cases}
+
+According to \cite{clausen1999principles}, \textbf{Backtracking} is a special case of the
+Branch \& Bound method with DFS used as the selection strategy.
+
+Brute-force search for optimization problems could be seen as another special case of the
+Branch \& Bound method with the bounding function $g(x) = -\infty$.
+Indeed, in this case, all nodes are evaluated
+and no subtree is ever discarded, leading to the exhaustive search through all the possible solutions
+(leaf nodes).
+
+\subsection{LRQ\#2: What were the previous attempts to formalize branch-and-bound and backtracking methods and algorithms based on them?}
+
+In \cite{narkawicz2013formalnasa}, authors present and formally verify a "generic branching
+algorithm\footnote{The terms \emph{generic algorithm} and \emph{template} are used interchangeably
+                    here and after}
+for solving global optimization problems". Their algorithm template is to be instantiated with
+functions (such as the objective function, the bounding function, etc) to form a concrete
+algorithm for solving a concrete optimization problem, which would be easier to formally verify
+because the core (generic) part of it is proven correct as long as supplied functions
+satisfy certain criteria.
+
+However, because the template in \cite{narkawicz2013formalnasa} was designed specifically for
+numerical optimization problems, it does not fit the most general B\&B use case for the following
+reasons:
+
+\begin{enumerate}
+    \item Because the researchers' goal was to simplify the verification of algorithms instantiated
+        from their template, the template is specialized for numerical optimization. It moves the
+        burden of verifying common numerical-related statements to the authors of the generic
+        part of the algorithm, however, it makes it harder to use their template for other kinds of
+        optimization problems. For example, the template in \cite{narkawicz2013formalnasa}
+        is designed to branch in a way that only makes sense when the objective function is seen as
+        a numerical function of multiple variables, each having a 1-dimensional domain.
+    \item Some aspects of the branch-and-bound technique, such as evaluation strategy
+        and selection strategy, can not be specialized in the
+        generic algorithm from \cite{narkawicz2013formalnasa} because they are hard-coded into it.
+\end{enumerate}
+
+The work in \cite{narkawicz2013formalnasa} further continues in \cite{smith2015rigorous},
+and is implemented as a C++ library called
+Kodiak \footnote{Electronically available at \url{https://github.com/nasa/Kodiak}},
+which was not itself formally verified, but, according to the authors, "closely follows
+the formally verified depth-first branch and bound algorithm with generic types for problem domains
+and solution types" (referring to \cite{narkawicz2013formalnasa}). Being an implementation of the
+generic algorithm discussed above, it suffers from the same issues: it is specialized to solve
+numerical optimization problems and does not allow to specialize some aspects, such as the
+virtual graph walk order.
+
+\subsection{LRQ\#3: What are ways in which these algorithms can be or are commonly implemented?}
+
+There were implementations of both backtracking-based and branch-and-bound-based algorithms
+for specific problems
+(e.g., \cite{bard1990bilevel}, \cite{breuel2003geometric}, \cite{lalami2012gpu}),
+as well as implementations generalized to varying extent
+(e.g., \cite{narkawicz2013formalnasa}, \cite{smirnov2017concur}, \cite{finkel1987distrib},
+\cite{prenner1972proglangs}, \cite{johnson1988modular}).
+
+In most cases, backtracking is implemented with recursive function calls,
+e.g., in \cite{narkawicz2013formalnasa}, \cite{bard1990bilevel},
+and branch-and-bound is implemented with a queue or a priority queue,
+depending on the selection strategy, e.g., in \cite{breuel2003geometric}.
+
+In special cases, other technical implementations are used, although the computation logic
+is roughly the same. For example, in \cite{lalami2012gpu}, authors implement a
+breadth-first search with items "sorted according to decreasing profit per weight ratio"
+(for most natural definitions of boundary functions, it is the same as best-first-search),
+however, because in this work computations are parallelized with a GPU
+(with some parts performed on a CPU), the technical implementation is somewhat more
+sophisticated than a mere loop on a priority queue.
+
+Distributed branch-and-bound search is another example in which the technical implementation
+becomes more complicated, although it follows the same general model. For example,
+in \cite{smirnov2017concur}, worker machines are assigned subtrees of the main search tree;
+during the computation, they only exchange their incumbent values. In particular, while solving one
+problem, workers can use different selection strategies, which can improve overall performance.
+In \cite{finkel1987distrib}, a different distributed algorithm is presented: the branching and
+node processing stages are separated, and worker machines exchange information about their
+subtrees and can be dynamically assigned nodes to process.
+
+There were also examples of more abstract research. For example, the
+authors of \cite{prenner1972proglangs} studied the possibilities of implementing
+backtracking in various programming languages, trying to stay as decoupled from specific language
+features as possible. This work, however, seems to focus on programming language design
+rather than backtracking search algorithms. In addition to that, the paper is relatively old and
+only presents theoretical ideas of backtracking implementation. Due to these reasons, it is unlikely
+that the article will be useful in the current work.
+
+Finally, \cite{johnson1988modular} presents a modular implementation of backtracking and
+branch-and-bound: core functions common to many concrete algorithms are implemented separately
+from problem-specific parts. The authors analyze the ease of implementation, as well as performance
+of assembly line balancing algorithms based on modular implementation compared to direct
+implementation. The authors also devise two different kinds of DFS branch-and-bound algorithms,
+referred to in the paper as \emph{deep-sea-troll} search and \emph{laser} search. While both
+being LIFO search strategies, selecting the right one of the two for a concrete  problem may
+affect performance (see \cite{johnson1988modular} for details).
+% It is, however, possible to encapsulate the choice
+% between deep-sea-troll and laser search strategies in the branching function, as long as the
+% collection of nodes that it returns is ordered: if the core library implements the laser search,
+% then a branching function returning new nodes in arbitrary order makes it a true laser search,
+% while a branching function that returns its values in order of decreasing profit will turn shall
+% result in an algorithm analogical to a deep-sea-troll search.
+
+\section{Conclusion}
+
+The relevant literature provides definitions and descriptions of the backtracking and
+branch-and-bound methods (both specialized for particular problems and general ones) and
+examples of their application to optimization problems.
+
+I have found theoretical research studying implementation
+of branch-and-bound for concrete problems
+\cite{clausen1999principles}, \cite{bard1990bilevel}, \cite{indriyono2024sudoku},
+as well as works that implement and/or verify versions of the branch-and-bound algorithm
+generalized to some extent
+\cite{narkawicz2013formalnasa}, \cite{johnson1988modular}
+or designed for special computation environment, e.g., GP$^2$U \cite{lalami2012gpu} or
+distributed versions of the algorithm \cite{finkel1987distrib}, \cite{smirnov2017concur}.
+
+However, only in \cite{johnson1988modular} did the authors present an approach that is fully
+general both in the problem to solve (as opposed to solutions designed for solving, e.g., global
+optimization problems, such as \cite{narkawicz2013formalnasa}) and in the computation method
+(as opposed to solutions designed for, e.g., distributed computation, such as
+\cite{finkel1987distrib}, \cite{smirnov2017concur}).
+
+In the current work, I am planning
+to implement a template library in the Rust programming language that does not rely
+on a special computation environment and is general enough to allow for solving
+arbitrary problems where branch-and-bound and/or backtracking algorithms can be applied.
+
 % =========== TEMPLATE STUFF BELOW ===========
 
 %\chaptermark{Second Chapter Heading}
