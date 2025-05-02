@@ -1,5 +1,8 @@
 \documentclass[oneside,final,14pt,a4paper]{extreport}
 
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
 \usepackage{tempora} % Times New Roman alike font
 \usepackage[color={red!100!green!33},textwidth=3cm,obeyFinal]{todonotes}
 
@@ -29,7 +32,7 @@
 
 \usepackage{pdfpages}
 \newenvironment{bottompar}{\par\vspace*{\fill}}{\clearpage}
-\usepackage{amsmath,amsfonts}
+\usepackage{amsmath,amssymb,  amsfonts}
 \usepackage{url}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}
@@ -54,7 +57,8 @@
 \hypersetup{colorlinks=true, linkcolor=black, citecolor=black}
 \usepackage{paralist}
 \usepackage{listings}
-\usepackage{zed-csp}
+% kolayne: Inclusion of zed-csp breaks pseudocode algorithms
+%\usepackage{zed-csp}
 \usepackage{fancyhdr}
 \usepackage{csquotes}
 \usepackage{color}
