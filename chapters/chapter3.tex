@@ -53,6 +53,12 @@ I selected Rust for its memory safety, flexible generic programming mechanisms, 
 type system that enables programmer to enforce more invariants in compile time (e.g., with
 Algebraic Data Types \cite{klabnik2023rust}).
 
+My library is implemented in pure Rust, relying mostly on the standard library, with an
+external dependency on the \texttt{binary\_heap\_plus}
+\footnote{\url{https://docs.rs/binary-heap-plus/0.5.0/binary_heap_plus/}} library,
+which extends the standard-library implementation of binary heap by providing convenience
+features and interfaces.
+
 % =========== TEMPLATE STUFF BELOW ===========
 
 % Referencing other chapters \ref{chap:lr}, \ref{chap:met}, \ref{chap:impl}, \ref{chap:eval} and \ref{chap:conclusion}
