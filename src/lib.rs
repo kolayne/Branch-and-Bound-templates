@@ -43,7 +43,7 @@ pub trait Subproblem {
     /// Higher score is better.
     type Score: Ord;
 
-    /// Evaluates a problem space.
+    /// Evaluates the subproblem space.
     ///
     /// If the space is to be broken further into subproblems, returns
     /// a sequence of subproblems (may be empty, which discards
@@ -63,7 +63,7 @@ pub trait Subproblem {
     ///   subproblem.
     fn branch_or_evaluate(&mut self) -> SubproblemResolution<Self, Self::Score>;
 
-    /// Value of the boundary function at the problem space.
+    /// Value of the boundary function at the subproblem space.
     ///
     /// The boundary function gives an upper-boundary of the best solution
     /// that could potentially be found in this subproblem space. The value of
@@ -82,7 +82,7 @@ pub trait Subproblem {
 ///
 /// Until the container is empty, a subproblem is popped from the container and evaluated;
 /// when a subproblem is branched, the generated subnodes are put into the container to be
-/// retrieved in the following iterations.
+/// retrieved in following iterations.
 ///
 /// A container is, thus, responsible for the order in which subproblems will be examined,
 /// and can also implement additional features, such as early termination based on
@@ -139,8 +139,8 @@ pub enum TraverseMethod<Node> {
     /// (or determines that a subtree is not worth descending into because the boundary
     /// value is not better than the incumbent's objective score).
     ///
-    /// TODO: stabilize and specify the order in which siblings of a certain node are processed,
-    /// so that the user may return nodes in the order of desired processing.
+    /// Nodes of the same layer will be processed in the order they are returned by the
+    /// `Subproblem::branch_or_evaluate` method.
     ///
     /// For typical boundary functions, uses significantly less memory compared to best-first
     /// and breadth-first search.
@@ -170,6 +170,8 @@ pub enum TraverseMethod<Node> {
     /// Processes subproblems in the order specified by `.cmp`: subproblems that compare
     /// *greater* are processed *first*! The processing order among subproblems that
     /// compare equal is unspecified.
+    ///
+    /// The processing order among nodes that compare equal according to `.cmp` is unspecified.
     ///
     /// Set `.cmp_superceeds_bound` to `true` only if `.cmp` guarantees that
     ///
