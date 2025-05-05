@@ -56,7 +56,7 @@
 \usepackage{hyperref}
 \hypersetup{colorlinks=true, linkcolor=black, citecolor=black}
 \usepackage{paralist}
-\usepackage{listings}
+\usepackage{listings, listings-rust}
 % kolayne: Inclusion of zed-csp breaks pseudocode algorithms
 %\usepackage{zed-csp}
 \usepackage{fancyhdr}
@@ -131,25 +131,30 @@
 \newcommand{\hlfix}[2]{\hl{#1}\todo{#2}}
 \fi
 
+\lstloadlanguages{Rust}
+\lstset{language=Rust, style=colouredRust}
+
 \begin{document}
 
 %TODO: \includepdf[pages=-]{title.pdf}
 \tableofcontents
 \listoftables
 \listoffigures
+\lstlistoflistings
 \newpage
 
 
 \include{chapters/abstract}
-\setcounter{page}{7}
+\setcounter{page}{8}
 % set manually the number, from which Chapter 1 starts!
 % Why do we put 7 in this case?
 % Title page - page 1
 % Contents - page 2, page 3
 % List of tables - page 4
 % List of figures - page 5
-% Abstract - page 6
-% Chapter 1 - page 7
+% List of listings - page 6
+% Abstract - page 7
+% Chapter 1 - page 8
 % In your thesis the counter number can be different, please count carefully and insert the corresponding number.
 
 \include{chapters/chapter1}
@@ -158,6 +163,7 @@
 \include{chapters/chapter4}
 \include{chapters/chapter5}
 \include{chapters/chapter6}
+\include{chapters/chapter7}
 
 
 %% REFERENCES

@@ -1,4 +1,235 @@
-\chapter{Implementation}
-\label{chap:impl}
+\chapter{Design}
+\label{chap:design}
 
-%\ldots
+The library allows to solve problems using the branch-and-bound and backtracking methods.
+To allow that, the library exports solving functions, as well as several interfaces
+(Rust \emph{traits}), which the library user should implement to use solver functions.
+
+This chapter provides a detailed description of the library interface. The full library
+documentation can be found in the Appendix.
+
+\section{Interface for basic usage}
+
+For the basic scenario, the library provides the following types, traits, and functions:
+
+\subsection{Trait \texttt{Subproblem}}
+
+While the library implements common parts of the branch-and-bound and backtracking methods,
+it is up to the library user to define the problem to solve. For that, the user must define
+their own type to represent a subproblem (a node in the virtual subproblem tree) and implement
+the provided \texttt{Subproblem} trait for their type.
+
+The trait is defined in the library code as follows:
+
+\begin{lstlisting}[caption=Trait \texttt{Subproblem}]
+pub trait Subproblem {
+    type Score: Ord;
+    fn branch_or_evaluate(&mut self) ->
+            SubproblemResolution<Self, Self::Score>;
+    fn bound(&self) -> Self::Score;
+}
+\end{lstlisting}
+
+According to this definition, the library user must provide three things for their type to
+implement the \texttt{Subproblem} trait:
+
+\begin{itemize}
+ \item An associated type (referred to as \texttt{Score}) that represents the return value of
+    the objective and boundary functions. The user-defined \texttt{Score} type must satisfy
+    the standard trait \texttt{Ord}, that is, be totally ordered;
+
+ \item The \texttt{branch\_or\_evaluate} method that evaluates the subproblem and returns
+    either a sequence of subproblems of the given subproblem, or (if the subproblem can be
+    solved directly) the objective function value at the solution to the subproblem. The result
+    is returned as a value of the provided polymorphic type \texttt{SubproblemResolution}
+    (see the next section for details). \\
+    Note: although, logically, this method only queries the state and should not mutate the
+    subproblem, a mutable reference to \texttt{self} is provided. This is useful for some
+    performance optimizations, e.g., when branching a subproblem: in this case, the library
+    is guaranteed to discard the old subproblem object after its subproblems are generated,
+    so the library user is allowed to reuse the old object's memory when generating new
+    subproblems;
+
+ \item The \texttt{bound} method that evaluates the boundary function at the subproblem
+    (gives an upper boundary estimation of the best objective function value achievable for
+    the subproblem).
+\end{itemize}
+
+\subsection{Enum \texttt{SubproblemResolution}}
+
+\sloppy
+For evaluating (resolving) a subproblem, the library provides the \texttt{SubproblemResolution}
+polymorphic type. It is defined in the library code as follows:
+
+\begin{lstlisting}[caption=Enum \texttt{SubproblemResolution}]
+pub enum SubproblemResolution<Node: ?Sized, Score> {
+    Branched(Box<dyn Iterator<Item = Node>>),
+    Solved(Score),
+}
+\end{lstlisting}
+
+The enum is parametrized with types \texttt{Node} (which represents a node in the virtual
+subproblem tree) and \texttt{Score} (which is the return type of the objective function).
+A value of \texttt{SubproblemResolution} is one of the two variants: either \texttt{Branched}
+(then it points to an iterator over the sequence of generated subproblems), or \texttt{Solved}
+(then it contains the value of the objective function at the solution to the subproblem).
+
+Note: as an extension to the branch-and-bound method as described in chapter \ref{chap:lr},
+with \texttt{SubproblemResolution} it is possible to express that a subproblem branches
+into an empty sequence. With the regular branch-and-bound method this does not make sense:
+every subproblem shall either be split into other (valid) subproblems, or solved directly.
+However, rather than only generating subproblems with valid constraints, it may be more
+convenient for the library user to generate subproblems, some of which have mutually exclusive
+constraints (i.e., have no solution). This is supported by the library:
+by branching into an empty sequence, a subproblem signals that no solution exists for it --
+in this case, the library merely discards the subproblem. In an implementation strictly
+following the method, such a subproblem would not be generated in the first place.
+% TODO: is ``in the first place'' informal?
+
+\subsection{Enum \texttt{TraverseMethod}}
+
+The \texttt{TraverseMethod} type represents the method of traversing the virtual subproblem
+tree. It is defined in the library code as follows:
+
+\begin{lstlisting}[caption=Enum \texttt{TraverseMethod}]
+pub enum TraverseMethod<Node> {
+    DepthFirst,
+    BreadthFirst,
+    BestFirst,
+    Custom {
+        cmp: Box<dyn Fn(&Node, &Node) -> Ordering>,
+        cmp_superceeds_bound: bool,
+    },
+}
+\end{lstlisting}
+
+Variants of \texttt{TraverseMethod} represent the following:
+
+\begin{itemize}
+ \item \texttt{DepthFirst} -- the virtual subproblem tree is walked in the depth-first search
+    manner, and subproblems are processed in the corresponding order (as in backtracking). \\
+    Subproblems to be processed are internally stored in a dynamic array (Rust's standard
+    collection \texttt{Vec});
+
+ \item \texttt{BreadthFirst} -- the virtual subproblem tree is walked in the breadth-first
+    search manner, and subproblems are processed in the corresponding order. \\
+    Subproblems to be processed are internally stored in a deque (Rust's standard collection
+    \texttt{VecDeque});
+
+ \item \texttt{BestFirst} -- subproblems are processed in the order according to the following
+    rule: on every iteration, the most promising subproblem (i.e., the one with highest
+    boundary function value) is selected from the set of live nodes and processed. \\
+    Subproblems to be processed are internally stored in a binary heap (implemented in the
+    external library \texttt{binary\_heap\_plus}). \\
+    This method supports early termination: if at some point the selected (most promising)
+    subproblem has the boundary value less than the objective function value at the incumbent,
+    then, due to properties of the boundary function, this subproblem, as well as all the
+    remaining unprocessed subproblems, can be rejected;
+
+ \item \texttt{Custom} -- subproblems are processed in the custom order according to the
+    user-specified comparison function \texttt{cmp}: on every iteration, the subproblem that
+    is greatest according to \texttt{cmp} is selected from the set of live nodes and
+    processed. \\
+    Subproblems to be processed are internally stored in a binary heap (implemented in the
+    external library \texttt{binary\_heap\_plus}). \\
+    \sloppy
+    This method supports early termination: the library user may set the
+    \texttt{cmp\_superceeds\_bound} flag to tell the library that the order defined by
+    the comparison function is stronger than the order defined by the boundary function
+    (meaning that ${\forall a, b: a >_{cmp} b \implies a.bound() > b.bound()}$).
+    In that case, the same early termination mechanism is applied as for the \texttt{BestFirst}
+    method. Otherwise, no early termination is performed.
+\end{itemize}
+
+\subsection{Function \texttt{solve}}
+
+The function solves the given problem using the given \texttt{TraverseMethod}.
+The function signature in the library code is as follows:
+
+\begin{lstlisting}[caption=Function \texttt{Solve}]
+pub fn solve<Node: Subproblem>(
+    initial: Node,
+    method: TraverseMethod<Node>,
+) -> Option<Node>
+\end{lstlisting}
+
+The function accepts the initial problem to be solved, which is a polymorphic
+parameter of type \texttt{Node}, which is a user-defined type that implements
+\texttt{Subproblem}.
+
+The function returns the subproblem that corresponds to the best solution found
+(i.e., the one with the highest value of the objective function).
+
+If no subproblem has ever evaluated to an objective function value
+(\texttt{SubproblemResolution::Solved}), i.e., all descendant subproblems branched to empty
+sequences, the function returns \texttt{None}.
+
+\section{Library extension interface}
+
+To allow for extension of the library functionality, the following interface is provided:
+
+\subsection{Trait \texttt{BnbAwareContainer}}
+
+The trait represents a container used to store subproblems to be processed
+(the set of live nodes). It supports the push (to add a subproblem) and pop (to take and
+remove a subproblem) operations, each of which has access to the value of the incumbent's
+score (objective function value) at the time of push/pop (if an incumbent exists).
+
+It is defined in the library code as follows:
+
+\begin{lstlisting}[caption=Trait \texttt{BnbAwareContainer}]
+pub trait BnbAwareContainer<S: Subproblem> {
+    fn push_with_incumbent(
+        &mut self,
+        item: S,
+        score: Option<&S::Score>
+    );
+    fn pop_with_incumbent(
+        &mut self,
+        score: Option<&S::Score>
+    ) -> Option<S>;
+}
+\end{lstlisting}
+
+A custom \texttt{BnbAwareContainer} can be useful to integrate features such as:
+
+\begin{itemize}
+ \item Custom subproblem storage and ordering;
+ \item Subproblem filtering based on the score: skipping pushes or pops of rejectable
+    subproblems (subproblems when boundary value lower than the incumbent's score). \\
+    Note: a container that discards rejectable subproblems on push implements the \emph{eager}
+    evaluation strategy; a container that discards rejectable subproblems on pop implements
+    the \emph{lazy} evaluation strategy;
+ \item Local exit \cite{narkawicz2013formalnasa}: discard subproblems that are too deep in
+    the virtual subproblem tree;
+ \item Global exit \cite{narkawicz2013formalnasa}: stop the solution attempts after the given
+    number of subproblems are processed;
+ \item etc.
+\end{itemize}
+
+\section{Advanced usage interface}
+
+To make use of library extensions (as described in the previous section), the following
+additional function is provided:
+
+\subsection{Function \texttt{solve\_with\_container}}
+
+The function signature in the library code is as follows:
+
+\begin{lstlisting}[caption=Function \texttt{solve\_with\_container}]
+pub fn solve_with_container<Node, Container>(
+    container: Container,
+) -> Option<Node>
+where
+    Node: Subproblem,
+    Container: BnbAwareContainer<Node>,
+\end{lstlisting}
+
+The function accepts a \texttt{BnbAwareContainer} containing the initial subproblem(s) to
+solve. Throughout the solving process, the container is used as the storage for the set of
+live nodes.
+
+Returns the subproblem corresponding to the best solution (i.e., the one with the
+highest value of the objective function). If no subproblem evaluates to an objective
+function value (\texttt{SubproblemResolution::Solved}) before the container refuses to pop
+a new subproblem, the function returns \texttt{None}.
