@@ -1,4 +1,47 @@
 \chapter{Implementation}
 \label{chap:impl}
 
-%\ldots
+This chapter describes implementation details, such as the reason for using an external library,
+additional components that I implemented to test the library, and implementation artifacts.
+
+\section{External dependency}
+
+The library is implemented in pure Rust with an external dependency on the
+\texttt{binary\_heap\_plus} library. I decideed to use the external library rahter than the
+standard \texttt{BinaryHeap} collection because of of a more convenient API. For example,
+the standard \texttt{BinaryHeap} requires that the stored type implements the \texttt{Ord}
+trait, while the collection from \texttt{binary\_heap\_plus} can accept comparison functions in
+runtime. However, the two implementations of binary heap are conceptually similar, so, with some
+extra utility code, the external dependency can be relinquished.
+
+\section{Problem solvers to test the library}
+
+To test the library functionality, I implemented two example solvers that use the library to
+solve the boolean satisfaction problem and the knapsack problem. Chapter \ref{chap:intro}
+provides the description of the problems and the overview of (library-agnostic)
+algorithms to solve them, which my examples are based on.
+
+In addition to that, I implemented solvers for both problems using the same algorithms
+but without using the library (\emph{native} solvers).
+The native solver for the knapsack problem solves it using the breadth-first search
+branch-and-bound method, and the native solver for the boolean satisfaction problem solves it
+using the backatracking method.
+
+The implemented solvers can be used to compare performance of library-based and native
+implementations, as well as estimate and compare the implementation difficulty for a developer.
+
+Input/output datasets to test CNF SAT and knapsack solvers were taken from
+\url{https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html} and
+\url{https://people.sc.fsu.edu/~jburkardt/datasets/knapsack_01/knapsack_01.html}, respectively.
+They are distributed under the terms of GNU LGPL version 3.
+
+\section{Implementation artifacts}
+
+The source code of the library and all of the examples (solvers) is electronically
+available at \url{https://github.com/kolayne/Branch-and-Bound-templates}. The library
+is available for download and installation as a Rust crate at
+\url{https://crates.io/crates/branch-and-bound}.
+% TODO: it is available under the terms of the MIT license.
+The up-to-date documentation of the latest version of the library is electronically available
+at \url{https://docs.rs/branch-and-bound/latest/branch_and_bound/}. The documentation of
+the current version can be found in the Appendix.
