@@ -86,11 +86,37 @@ impl KnapsackSubproblem {
     /// (i.e., descending order of the `.price / .weight` ratio).
     ///
     /// Note: items with weight exceeding capacity are never kept in `KnapsackProblem`.
-    pub fn future_items(&self) -> impl Iterator<Item = &Item> {
+    fn future_items(&self) -> impl Iterator<Item = &Item> {
         self.items_left
             .iter()
             .rev()
             .filter(|item| item.weight <= self.capacity_left)
+    }
+
+    /// Calculates the boundary value: an upper boundary of the best price potentially
+    /// achiaveble from the current `KnapsackSubproblem`. It works as follows.
+    ///
+    /// If I was to add items greadily (items are ordered by ratio) and would get a
+    /// perfect fit (full knapsack), that would be the best solution. Indeed, removing
+    /// any item(s) and putting item(s) with worse ratio would give a worse total price.
+    ///
+    /// Here, I start putting items greadily until I either get a perfect fit or overflow
+    /// the knapsack with one item. When the knapsack is overflown, I know that I have the
+    /// best price for a knapsack of a larger capacity, which can not be lower than the
+    /// best price for the current knapsack.
+    pub fn bound(&self) -> u64 {
+        let mut val = self.collected_val();
+        let mut capacity = self.capacity_left();
+        for item in self.future_items() {
+            if item.weight < capacity {
+                val += item.price;
+                capacity -= item.weight;
+            } else {
+                // Exceeding the capacity with this item
+                return val + item.price;
+            }
+        }
+        val
     }
 
     /// Converts a `KnapsackSubproblem` into the set of items that are in the knapsack.

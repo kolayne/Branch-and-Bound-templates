@@ -29,26 +29,7 @@ impl Subproblem for KnapsackSubproblem {
     }
 
     fn bound(&self) -> Self::Score {
-        // If I was to add items greadily (items are ordered by ratio) and perfectly fill
-        // the knapsack, that would be the best solution.
-        //
-        // The heuristic is as follows: I try to use a bit more than
-        // the capacity of the knapsack and when that is filled, I claim that
-        // that's the best we could possibly get
-        // (because that's the best we could possibly get with a slightly larger knapsack).
-
-        let mut val = self.collected_val();
-        let mut capacity = self.capacity_left();
-        for item in self.future_items() {
-            if item.weight < capacity {
-                val += item.price;
-                capacity -= item.weight;
-            } else {
-                // Exceeding the capacity with this item
-                return val + item.price;
-            }
-        }
-        val
+        self.bound()
     }
 }
 
