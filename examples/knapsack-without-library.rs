@@ -55,14 +55,5 @@ fn solve(problem: KnapsackSubproblem) -> Option<KnapsackSubproblem> {
 }
 
 fn main() {
-    let i = |w, p| Item {
-        weight: w,
-        price: p,
-    };
-
-    // Just an arbitrary example I made up
-    let problem = KnapsackSubproblem::new(9, vec![i(6, 5), i(1, 1), i(2, 2), i(4, 4)]);
-
-    let packed = solve(problem).expect("Solution always exists, empty knapsack in the worst case");
-    println!("Solved: {:#?}", packed.into_items());
+    examples_main();
 }

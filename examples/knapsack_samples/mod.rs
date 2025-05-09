@@ -3,6 +3,7 @@
 // and is disttributed under the GNU LGPL v3 license (see gnu_lgpl.txt).
 
 #![allow(non_upper_case_globals)]
+
 use std::collections::HashSet;
 
 use super::Item;

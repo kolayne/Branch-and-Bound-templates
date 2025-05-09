@@ -38,17 +38,5 @@ fn solve(problem: KnapsackSubproblem) -> Option<KnapsackSubproblem> {
 }
 
 fn main() {
-    let i = |w, p| Item {
-        weight: w,
-        price: p,
-    };
-
-    // Just an arbitrary example I made up
-    let problem = KnapsackSubproblem::new(9, vec![i(6, 5), i(1, 1), i(2, 2), i(4, 4)]);
-
-    if let Some(packed) = solve(problem) {
-        println!("Solved: {:#?}", packed.into_items());
-    } else {
-        println!("No solution!");
-    }
+    examples_main();
 }

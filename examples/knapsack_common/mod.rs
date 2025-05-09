@@ -125,6 +125,22 @@ impl KnapsackSubproblem {
     }
 }
 
+pub fn examples_main() {
+    let i = |w, p| Item {
+        weight: w,
+        price: p,
+    };
+
+    // Just an arbitrary example I made up
+    let problem = KnapsackSubproblem::new(9, vec![i(6, 5), i(1, 1), i(2, 2), i(4, 4)]);
+
+    if let Some(packed) = super::solve(problem) {
+        println!("Solved: {:#?}", packed.into_items());
+    } else {
+        println!("No solution!");
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::super::knapsack_samples as samples;

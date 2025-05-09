@@ -46,6 +46,11 @@ pub struct CnfSat {
     pub vars_by_frequency: Vec<u32>,
 }
 
+/// Parses a CNF file.
+///
+/// The function code is horribly large and quite hard to read. Sorry about that.
+/// Because it is only here to parse files for examples, I'm too lazy to
+/// refactor it, it's sufficient for me that it works.
 pub fn parse_cnf<R: io::Read>(read: R) -> Result<CnfSat, Box<dyn Error>> {
     let mut ans = CnfSat {
         vars_cnt: 0,
@@ -115,7 +120,7 @@ pub fn parse_cnf<R: io::Read>(read: R) -> Result<CnfSat, Box<dyn Error>> {
 
     ans.clauses.reserve(clauses_left);
 
-    // TODO: could implement another heuristic: check if some variable only
+    // Here I could implement another heuristic: check if some variable only
     // appears with the same sign. Then can infer its value outright.
     //
     // While a practically useful heuristic, it isn't related to the library
