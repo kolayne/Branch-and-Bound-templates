@@ -1,4 +1,194 @@
-\chapter{Evaluation and Discussion}
-\label{chap:eval}
+\chapter{Results}
+\label{chap:res}
 
-%\ldots
+This chapter presents the implementation artifacts and analyzes the library by comparing
+solvers implemented with and without use of the library by their code size and
+complexity (based on cyclomatic complexity, a metric commonly used
+in the industry \cite{ebert2016cyclomatic}), performance, and subjective
+implementation difficulty.
+
+\section{Implementation artifacts}
+
+The source code of the library and all of the examples (solvers) is electronically
+available at \url{https://github.com/kolayne/Branch-and-Bound-templates}. The library
+is available for download and installation as a Rust crate at
+\url{https://crates.io/crates/branch-and-bound}.
+% TODO: it is available under the terms of the MIT license.
+The up-to-date documentation of the latest version of the library is electronically available
+at \url{https://docs.rs/branch-and-bound/latest/branch_and_bound/}. The documentation of
+the current version can be found in the Appendix.
+
+\section{Solvers comparison}
+
+This section compares library-based and native solvers of CNF SAT and the Knapsack problem.
+For CNF SAT, I first implemented a native solver, then a library-based
+solver. For the Knapsack problem, I first implemented a library-based solver, then a
+native solver.
+
+\subsection{Code and implementation complexity}
+
+The source code for both problem solvers was organized in three modules: the main file
+for a library-based solver, the main file for a native solver, and a file with common code
+implementing types and basic methods that are used by both solvers.
+
+The amount of code per file for both solvers (excluding empty lines, comments, and code for
+input parsing and unit testing) can be found in table \ref{tab:loc_solvers}.
+
+\begin{table}[h!]
+ \centering
+ \caption[Lines of code per problem solver implementation (CNF SAT and Knapsack)]
+    {Lines of code (LoC) per implementation file}
+ \label{tab:loc_solvers}
+
+ \begin{tabular}{|c||c|c|c|}
+  \hline
+  & library-based solver code & native solver code & common code \\
+  \hline
+  CNF SAT & 77 & 66 & 133 \\
+  \hline
+  Knapsack & 32 & 44 & 136 \\
+  \hline
+ \end{tabular}
+\end{table}
+
+The values of the cyclomatic complexity metric \cite{ebert2016cyclomatic} for functions
+implemented in the solvers (excluding code for input parsing and unit testing) can be found
+in tables \ref{tab:CC_cnfsat} and \ref{tab:CC_knapsack}.
+
+\begin{table}
+ \centering
+ \caption{Cyclomatic complexity per function of the CNF SAT solvers}
+ \label{tab:CC_cnfsat}
+
+ \begin{tabular}{|c|c|c|c|}
+  \hline
+  filename & function name & LoC & CC \\
+  \hline\hline
+  \multirow{4}*{examples/dpll.rs} & \texttt{branch\_or\_evaluate} & 50 & 6 \\
+  & \texttt{solve} & 10 & 1 \\
+  & \texttt{main} & 3 & 1 \\
+  & \texttt{bound} & 1 & 1 \\
+  \hline
+  \multirow{3}*{examples/dpll-without-library.rs} & \texttt{solve\_dfs} & 52 & 10 \\
+  & \texttt{solve} & 8 & 2 \\
+  & \texttt{main} & 3 & 1 \\
+  \hline
+  \multirow{5}*{examples/dpll\_common/mod.rs} & \texttt{eval} & 20 & 8 \\
+  & \texttt{examples\_main} & 18 & 5 \\
+  & \texttt{assert\_solves} & 9 & 3 \\
+  \hline
+ \end{tabular}
+\end{table}
+
+\begin{table}
+ \centering
+ \caption{Cyclomatic complexity per function of the Knapsack problem solvers}
+ \label{tab:CC_knapsack}
+
+ \begin{tabular}{|c|c|c|c|}
+  \hline
+  filename & function/method name & LoC & CC \\
+  \hline\hline
+  \multirow{4}*{examples/knapsack.rs} & \texttt{branch\_or\_evaluate} & 15 & 3 \\
+  & \texttt{bound} & 3 & 1 \\
+  & \texttt{solve} & 3 & 1 \\
+  & \texttt{main} & 3 & 1 \\
+  \hline
+  \multirow{3}*{examples/knapsack-without-library.rs} & \texttt{solve} & 29 & 7 \\
+  & \texttt{best\_candidate} & 7 & 2 \\
+  & \texttt{main} & 3 & 1 \\
+  \hline
+  \multirow{11}*{examples/knapsack\_common/mod.rs} & \texttt{pop\_too\_heavy} & 9 & 3 \\
+  & \texttt{bound} & 13 & 3 \\
+  & \texttt{examples\_main} & 12 & 2 \\
+  & \texttt{new} & 13 & 1 \\
+  & \texttt{include\_next} & 8 & 1 \\
+  & \texttt{future\_items} & 6 & 1 \\
+  & \texttt{drop\_next} & 5 & 1 \\
+  & \texttt{have\_items} & 3 & 1 \\
+  & \texttt{capacity\_left} & 3 & 1 \\
+  & \texttt{collected\_val} & 3 & 1 \\
+  & \texttt{into\_items} & 3 & 1 \\
+  \hline
+ \end{tabular}
+\end{table}
+
+Overall, the library-based implementation of the CNF SAT solver (excluding the common code)
+was $\approx 16.7\%$ longer (77 lines compared to 66 lines in the native implementation),
+while the library-based implementation of the knapsack problem solver (excluding the
+common code) was $37.5\%$ shorter (32 lines compared to 44 lines in the native
+implementation). So, there is no clear relation betwen the usage of the library and the
+code size.
+
+As for the cyclomatic complexity metric, the value for the most complex function
+is lower for the library-based implementation in both cases:
+$\approx 66.7\%$ lower for the CNF SAT problem
+(6 for \texttt{branch\_or\_evaluate} from the library-based implementation and
+10 for \texttt{solve\_dfs} from the native implementation)
+and $\approx 133.3\%$ lower for the knapsack problem implementation
+(3 for \texttt{branch\_or\_evaluate} from the library-based implementation and
+7 for \texttt{solve} from the native implementation).
+This may suggest that solvers designed and implemented for work with the library
+generally have simpler code.
+
+Note: code complexity is affected by aspects of the way branch-and-bound method
+is implemented, such as evaluation strategy: in the knapsack examples, both eager evaluation
+and lazy evaluation checks are performed, resulting in the increased cyclomatic complexity
+in the native solver (for the library-based solver, evaluation strategy is encapsulated
+by the library).
+
+Finally, subjectively, there was no significant difference in the difficulty of
+implementation of solvers for CNF SAT and the knapsack problem with and without the library.
+
+\subsection{Performance}
+
+To test performance of the solutions, I selected 3 CNF SAT tests that take longest for
+both CNF SAT solver implementations and 1 Knapsack test that takes longest for both
+Knapsack problem solver implementations.
+I ran each implementation 15 times on every test, excluded two shortest and two longest
+runs, and calculated the average time it took the implementations to solve the problems.
+
+The results are presented in tables \ref{tab:perf_cnfsat} and \ref{tab:perf_knapsack}.
+The values are given in the form $A\pm B$, where $A$ is the average run time,
+and $B$ is a value such that all the considered runs (except for the four outliers) are in
+the range $[A - B; A + B]$.
+
+\begin{table}[h]
+ \centering
+ \caption{Average time per run for the CNF SAT solvers}
+ \label{tab:perf_cnfsat}
+
+ \begin{tabular}{|ccc|}
+  \hline
+  Test name & library-based solver time, s & native solver time, s \\
+  \hline
+  dubois\_20.cnf & $\approx 12.300\pm 0.297$ & $\approx 11.512\pm 0.288$ \\
+  dubois\_21.cnf & $\approx 25.702\pm 0.456$ & $\approx 24.040\pm 0.329$ \\
+  dubois\_22.cnf & $\approx 52.609\pm 0.329$ & $\approx 50.715\pm 0.633$ \\
+  \hline
+ \end{tabular}
+\end{table}
+
+\begin{table}[h]
+ \centering
+ \caption{Average time per run for the Knapsack problem solvers}
+ \label{tab:perf_knapsack}
+
+ \begin{tabular}{|ccc|}
+  \hline
+  Test name & library-based solver time, s & native solver time, s \\
+  \hline
+  Test 8 & $\approx 0.293\pm 0.009$ & $\approx 0.379\pm 0.006$ \\
+  \hline
+ \end{tabular}
+\end{table}
+
+Thus, the use of the library has a negative influence on the performance of solvers:
+from $\approx 3.7\%$ slower (in dubois\_22.cnf) to $\approx 6.9\%$ slower (in dubois\_21.cnf)
+for CNF SAT problem samples (impact being least significant in the largest test),
+and $\approx 29.4\%$ slower for the Knapsack problem sample.
+
+Note: because performance was not a primary focus during the development of the library,
+some decisions during its implementation were made in the favor of easy usage rather than
+high performance. The performance of the library can be improved by revisiting these
+decisions, and by profiling and optimizing the library code.
