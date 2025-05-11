@@ -72,6 +72,12 @@ encoding=UTF-8
 highlight=LaTeX
 mode=LaTeX
 
+[item:chapters/chapter8.tex]
+archive=true
+encoding=
+highlight=
+mode=
+
 [item:figs/IU.png]
 archive=true
 encoding=

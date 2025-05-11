@@ -10,6 +10,8 @@ documentation can be found in the Appendix.
 
 \section{Interface for basic usage}
 
+\label{sec:basic_usage}
+
 For the basic scenario, the library provides the following types, traits, and functions:
 
 \subsection{Trait \texttt{Subproblem}}
@@ -61,7 +63,7 @@ implement the \texttt{Subproblem} trait:
 For evaluating (resolving) a subproblem, the library provides the \texttt{SubproblemResolution}
 polymorphic type. It is defined in the library code as follows:
 
-\begin{lstlisting}[caption=Enum \texttt{SubproblemResolution}]
+\begin{lstlisting}[caption=Enum \texttt{SubproblemResolution},label={lst:SubproblemResolution}]
 pub enum SubproblemResolution<Node: ?Sized, Score> {
     Branched(Box<dyn Iterator<Item = Node>>),
     Solved(Score),
@@ -166,6 +168,8 @@ sequences, the function returns \texttt{None}.
 
 \section{Library extension interface}
 
+\label{sec:lib_extension_interface}
+
 To allow for extension of the library functionality, the following interface is provided:
 
 \subsection{Trait \texttt{BnbAwareContainer}}
@@ -208,6 +212,8 @@ A custom \texttt{BnbAwareContainer} can be useful to integrate features such as:
 \end{itemize}
 
 \section{Advanced usage interface}
+
+\label{sec:advanced_usage}
 
 To make use of library extensions (as described in the previous section), the following
 additional function is provided:

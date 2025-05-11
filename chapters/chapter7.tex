@@ -1,4 +1,168 @@
-\chapter{Evaluation and Discussion? Conclusion?}
-\label{chap:conclusion}
+\chapter{Discussion}
+\label{chap:discuss}
 
-%\ldots
+This chapter suggests applications of the library and discusses its limitations
+and possible future work.
+
+\section{Possible applications}
+
+This section summarizes benefits that the library provides and proposes possible applications
+of the library.
+
+\subsection{Regular solvers implementation}
+
+The library provides the ability to implement branch-and-bound-based and backtracking-based
+problem solvers. So, its most natural application is to use it for implementing such solvers.
+
+As demonstrated in chapter \ref{chap:res}, solver implementations based on the library
+tend to have lower code complexity, thus, supposedly, better readability.
+
+In addition to that, as I discovered while testing the example solvers,
+the library provides a convenient interface for prototyping, e.g., when one wants to study
+what method is most efficient to solve a problem.
+
+When implemented directly,
+backtracking-based and branch-and-bound-based algorithms usually have inherently different
+code structure: code implementing backtracking is usually written as a recursive function
+implicitly relying on the call stack, while branch-and-bound is implemented as a loop
+with an explicit FIFO queue or priority queue. For this reason, it would take effort
+to rewrite an existing backtracking solution into branch-and-bound or vice versa, especially
+if both code bases need to be maintained.
+
+Conversely, with the library (with basic usage, as described in section
+\ref{sec:basic_usage}), it takes a single function call argument change to switch between
+backtracking, breadth-first branch-and-bound, best-first branch-and-bound, and
+branch-and-bound with a custom subproblem processing order.
+
+\subsection{Formal verification}
+
+Another possible application of the library is to use it to develop problem solvers
+that are to be formally verified.
+
+If the library itself is formally verified, i.e., it is proven that problems are solved
+correctly, given that a set of properties holds on the input types and their methods,
+it can simplify the formal verification of solvers based on the library, as it will be
+enough to prove that the required properties hold for the implemented methods.
+This is similar to the approch
+of authors of \cite{narkawicz2013formalnasa}, \cite{smith2015rigorous}, but the library
+implemented in the current work is more generic and, thus, allows to solve a wider range
+of problems.
+
+However, the library genericness is making it harder to verify it. For example,
+with advanced usage (as described in sections
+\ref{sec:lib_extension_interface} - \ref{sec:advanced_usage}), by supplying a
+custom container, one can enable features such as early termination based on
+local exit and/or global exit \cite{narkawicz2013formalnasa}. But such modifications to
+the algorithm change the meaning of correctness: a different condition is expected to hold
+for the solution.
+
+Thus, if the advanced usage of the library is to be verified, perhaps, a different,
+more generic approach to the verification itself should be taken.
+
+\subsection{Education}
+
+The use of the library to solve a problem requires the understanding of two areas:
+data structures and algorithms, to implement problem-specific logic,
+and generic programming, to make use of the generic library interfaces. Thus, the library
+could be used in a computer science education program as an exercise on the two concepts.
+
+For example, in Innopolis University, in the second semester of the first year,
+Bachelor's students have the Software Systems Analysis and Design course, where
+they study design patterns, and the Data Structures and Algorithms course. As the concepts
+used by the library are relevant to both courses, a joint lab session or assignment could be
+developed, where students would, e.g., solve a problem using the library, or implement and
+compare solvers with and without use of the library, etc.
+
+What complicates the integration of the library into the education process, though, is that
+it is written in Rust, and only provides a Rust interface, but Rust is not taught at
+core courses in Innopolis University, so most students cannot write in it.
+
+\section{Limitations and future work}
+
+This section describes aspects of the library that could be improved.
+
+\subsection{Implementation improvements}
+
+\subsubsection{Performance}
+
+As discussed in chapter \ref{chap:res}, the performance of library-based solvers is lower
+than that of native solvers. On the one hand, this is an expected outcome, as through
+additional abstract types, the library incurs overhead. On the other hand, thanks to the
+Rust compiler optimizations \cite{klabnik2023rust},
+%which are capable of optimizing out extra layers of types,
+some abstractions are optimized out, resulting in faster execution.
+
+Nevertheless, certain implementation aspects could be improved to achieve better performance.
+For example, the library accepts new nodes of a branched subproblem as an object of type
+\texttt{Box<dyn Iterator<Item = Node>>}. Because of that, on every branching, the solver
+is required to allocate a new \texttt{Box} object.
+According to profiling, these allocations are taking about
+$0.53\% - 0.97\%$ of the execution time in the Knapsack problem solver,
+and could take longer on larger samples.
+
+Instead, at the cost of an additional generic parameter (thus, slightly less convenient
+API), static code can be generated for using the iterator returned by a solver, thus,
+the \texttt{Box} allocations can be removed completely.
+
+With further profiling and analysis, more possible improvements might be identified.
+
+\subsubsection{Lifetime of user-defined subproblems}
+
+Due to the simplicity of the initial library design, the library implicitly requires
+that all user-defined objects that implement \texttt{Subproblem} have the \texttt{'static}
+lifetime, meaning that such objects cannot contain references to external
+dynamically allocated objects. This limitation occurs because Rust uses subtyping and
+variance to manage liftimes, and the \texttt{SubproblemResolution}
+(listing \ref{lst:SubproblemResolution}) is defined
+such that its \texttt{Node} generic parameter becomes invariant
+\footnote{More information on subtyping and variance can be found in the Rust documentation,
+electronically available at \url{https://doc.rust-lang.org/nomicon/subtyping.html}}.
+
+Because of that, solver implementations that want to share memory between subproblem objects,
+such as the CNF SAT solver implemented as part of this work, have to resort to mechanisms
+that move the lifetime management to runtime and inqur additional overhead, e.g.,
+use reference counting via \texttt{std::Rc}.
+
+Instead, the library could explicitly allow non-static lifetime for \texttt{Subproblem}
+objects in \texttt{SubproblemResolution}, in which case no extra effort would be needed
+on the library user side.
+
+\subsection{Design improvements}
+
+\subsubsection{Subproblem generation on branch}
+
+According to the current library design, a user-defined subproblem, when branching,
+must generate and return all of its subproblems at the same time. While it perfectly fits
+the branch-and-bound method, it does not alighn well with the backtracking method, where
+subproblems are typically generated one by one, on demand. For example, by only ever
+considering one subproblem at a time, the native solver of CNF SAT is able to reuse
+a single memory block for all the subproblems considered, never allocating or freeing
+dynamic memory during the solution process. Conversely, the library-based implementation
+of the solver cannot achieve that, as it must create two subproblems from one
+at a time, which requires copying.
+
+Instead, the library could use \emph{lending iterators}
+(also known as \emph{streaming iterators}) \cite{LendingIterator},
+which is a pattern that enables iterators that provide values temporarily,
+meaning that the following value can only be taken from a lending iterator after the previous
+value is no longer used. Thus, the name: an iterator \emph{lends} a value,
+but the user of the iterator must ``give it back'' (i.e., give up access to it)
+before they can access the following one.
+
+With lending iterators, it is possible for a library user to implement a solver that
+reuses memory: having the guarantee that the following element is only accessed when
+the previous one is no longer accessible, every subproblem may rely on the same memory
+region. The region can only be accessed externally through the currently lended subproblem.
+Yet, with lending iterators, the library can still implement the branch-and-bound method
+by copying lended subproblems according to a user-specified algorithm, via the standard
+\texttt{Clone} trait.
+
+Thus, subproblem generation and copying are separated, and, although both still need to be
+performed with the branch-and-bound method, allocation and copying can be avoided with
+backtracking.
+
+However, lending iterators are not part of standard Rust (yet?), and are only available as
+community crates
+\footnote{\url{https://docs.rs/lending-iterator/latest/lending_iterator/}}
+\footnote{\url{https://docs.rs/streaming-iterator/latest/streaming_iterator/}},
+so their use in the library interface might complicate the API.
