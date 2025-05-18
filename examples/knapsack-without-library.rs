@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
-mod knapsack_common;
-use knapsack_common::*;
+mod knapsack_core;
+use knapsack_core::*;
 
 #[cfg(test)]
 mod knapsack_samples;

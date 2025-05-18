@@ -1,7 +1,7 @@
 use std::error::Error;
 
-mod dpll_common;
-use dpll_common::*;
+mod dpll_core;
+use dpll_core::*;
 
 fn solve_dfs(problem: &CnfSat, mut vars_left: &[u32], assignments: &mut [i8]) -> bool {
     let mut unknown_count = 0;

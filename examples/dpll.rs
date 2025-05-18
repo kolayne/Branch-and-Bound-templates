@@ -2,8 +2,8 @@ use std::{error::Error, rc::Rc};
 
 use branch_and_bound::{Subproblem, SubproblemResolution};
 
-mod dpll_common;
-use dpll_common::*;
+mod dpll_core;
+use dpll_core::*;
 
 pub struct Node {
     clauses: Rc<Vec<Clause>>,
