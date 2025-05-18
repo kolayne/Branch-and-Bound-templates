@@ -20,38 +20,44 @@ Java interfaces (a function parameter is explicitly required to satisfy an inter
 instance of a class satisfying the interface can be passed as an argument).
 Although logically different, the two methods are technically similar: both require that
 an interface of a polymorphic parameter is explicitly defined in the code (either as a
-Java interface or a base class), type compatibility for calls is ensured at compile time
-(where possible), and method calls for polymorphic parameters are resolved at run time.
+Java interface or a base class), type compatibility for calls is ensured at compile time,
+and method calls for polymorphic parameters are resolved at run time.
 
 In C++ programs, polymorphism can be achieved either through inheritance, or with template
 programming. Inheritance in C++ is similar to that in Java: instances of derived classes can
 be used in place of instances of base classes; interface of a polymorphic parameter is
 explicitly defined in code (the base class), type compatibility is checked
 at compile time, and method calls are resolved at run time. As for template programming,
-no explicit interface definition is needed (when substituting concrete types for polymorphic
-types, compiler will check that all operations used in the function body are defined for
-the substituted types), and separate object code is generated for every instance of
-a template function (i.e., for every set of type parameters that a polymorphic function is
-called with), thus, type checks as well as method call resolution are performed at compile time.
+no explicit interface definition is required (although may be specified through the
+Constraints and Concepts feature, starting with C++20
+\footnote{\url{https://en.cppreference.com/w/cpp/language/constraints}}):
+when substituting concrete types for polymorphic types, the compiler will check that all
+operations performed in the function body are valid for the substituted types. For every
+instance of a template function (i.e., for every set of type parameters that a polymorphic
+function is called with), separate object code is generated. Thus, type checks as well as
+method call resolution are performed at compile time.
 
 \section{Technologies selected for implementation}
 
 For implementation of the library, I selected the Rust programming language. Rust is a modern
-(first stable release in 2015 \footnote{\url{https://releases.rs/}})
+\footnote{The first stable release of Rust was in 2015: \url{https://releases.rs/}}
 compiled general-purpose programming language with a focus on performance and memory safety
 \cite{klabnik2023rust}.
 
 In Rust, polymorphism is achieved through explicit definition of a
-\emph{trait} \cite{klabnik2023rust} (conceptually similar to a Java interface),
+\emph{trait} \cite{klabnik2023rust} (which is conceptually similar to a Java interface or a
+C++ concept),
 which can be used to accept polymorphic arguments in functions.
 Types are checked at compile time, and Rust provides mechanisms for method call
-resolution both in compile-time (like in C++ templates, optimizing execution performance)
-and run-time (like Java interfaces, optimizing the executable file size),
-leaving choice to the programmer.
+resolution both in compile-time (like with C++ templates, optimizing execution performance)
+and run-time (like with Java interfaces or C++ inheritance, optimizing the executable file
+size). The programmer may decide which method resolution mechanism to use for each generic
+function parameter.
 
 I selected Rust for its memory safety, flexible generic programming mechanisms, and rich
-type system that enables programmer to enforce more invariants in compile time (e.g., with
-Algebraic Data Types \cite{klabnik2023rust}).
+type system that enables programmer to enforce more invariants at compile time (e.g., with
+Algebraic Data Types \cite{klabnik2023rust}). With this work, I would also like to demonstrate
+that Rust is well suited for generic programming.
 
 My library is implemented in pure Rust, relying mostly on the standard library, with an
 external dependency on the \texttt{binary\_heap\_plus}
