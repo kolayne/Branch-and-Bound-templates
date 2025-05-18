@@ -187,10 +187,17 @@ the range $[A - B; A + B]$.
 
 Thus, the use of the library has a negative influence on the performance of solvers:
 from $\approx 3.7\%$ slower (in dubois\_22.cnf) to $\approx 6.9\%$ slower (in dubois\_21.cnf)
-for CNF SAT problem samples (impact being least significant in the largest test),
-and $\approx 29.4\%$ slower for the Knapsack problem sample.
+for CNF SAT problem samples, and $\approx 29.4\%$ slower for the Knapsack problem sample.
+
+The relative execution time difference between CNF SAT solvers is smallest for the
+dubois\_22 test, which takes longest to solve for both solvers. While this may
+suggest that for more complex inputs the relative library-incurred overhead is lower,
+there are not enough data to conclude that: first, the relative execution
+time difference is higher for the dubois\_21 (larger) test than for the dubois\_20 (smaller)
+test, which may or may not be due to individual test features, second, a trend in a single
+library-based implementation is not sufficient to draw a conclusion about the library.
 
 Note: because performance was not a primary focus during the development of the library,
 some decisions during its implementation were made in the favor of easy usage rather than
 high performance. The performance of the library can be improved by revisiting these
-decisions, and by profiling and optimizing the library code.
+decisions, as well as by profiling and optimizing the library code.
