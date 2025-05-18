@@ -1,4 +1,29 @@
 \chapter{Conclusion}
 \label{chap:concl}
 
-\ldots
+A library for implementing branch-and-bound and backtracking algorithms was implemented
+and published; solvers for two problems were implemented on top of the library to test it;
+two other solvers that don't use any libraries were implemented for the same problems to compare
+them to the library-based ones; experiments were conducted, and solvers' execution time and
+code complexity were collected and compared.
+
+Experiments have shown that library-based solvers take longer to execute than native ones,
+and the difference in performance depends on the problem: the library-based CNF SAT solver
+was up to $6.9\%$ slower than the native one, while the library-based Knapsack problem solver was
+up to $29.4\%$ slower than the native one; the code size varies between different solvers, so
+it is not clear whether it is affected by the use of the library, however, the cyclomatic
+complexity of the most complex function of a library-based solver is up to $133.3\%$ lower
+than that of a native solver, which suggests that the interface provided by the library may
+nudge programmers to write simpler code.
+
+It has also been discovered that the library may be convenient for early development stages,
+such as prototyping, when the implementation details (e.g., whether backtracking or
+branch-and-bound fits the problem better) are yet to be decided: because the library decouples
+problem-specific code from the solver code, it takes little code changes to switch between
+different modes.
+
+These results confirm that the Rust programming language is well fit for tasks involving
+generic programming.
+
+Further work may include understanding other contexts in which the library can be useful.
+The suggested application areas are education and reliable computing.
