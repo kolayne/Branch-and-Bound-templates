@@ -21,7 +21,7 @@ it is up to the library user to define the problem to solve. For that, the user 
 their own type to represent a subproblem (a node in the virtual subproblem tree) and implement
 the provided \texttt{Subproblem} trait for their type.
 
-The trait is defined in the library code as follows:
+The trait \texttt{Subproblem} is defined in the library code as follows:
 
 \begin{lstlisting}[caption=Trait \texttt{Subproblem}]
 pub trait Subproblem {
@@ -70,8 +70,9 @@ pub enum SubproblemResolution<Node: ?Sized, Score> {
 }
 \end{lstlisting}
 
-The enum is parametrized with types \texttt{Node} (which represents a node in the virtual
-subproblem tree) and \texttt{Score} (which is the return type of the objective function).
+The enum \texttt{SubproblemResolution} is parametrized with types \texttt{Node}
+(which represents a node in the virtual subproblem tree) and \texttt{Score}
+(which is the return type of the objective function).
 A value of \texttt{SubproblemResolution} is one of the two variants: either \texttt{Branched}
 (then it points to an iterator over the sequence of generated subproblems), or \texttt{Solved}
 (then it contains the value of the objective function at the solution to the subproblem).
@@ -85,7 +86,8 @@ convenient for the library user to generate subproblems, some of which have mutu
 constraints (i.e., have no solution). This is supported by the library:
 by branching into an empty sequence, a subproblem signals that no solution exists for it --
 in this case, the library merely discards the subproblem. In an implementation strictly
-following the method, such a subproblem would not be generated in the first place.
+following the method as described in chapter \ref{chap:lr}, such a subproblem would not be
+generated in the first place.
 % TODO: is ``in the first place'' informal?
 
 \subsection{Enum \texttt{TraverseMethod}}
@@ -175,11 +177,12 @@ To allow for extension of the library functionality, the following interface is 
 \subsection{Trait \texttt{BnbAwareContainer}}
 
 The trait represents a container used to store subproblems to be processed
-(the set of live nodes). It supports the push (to add a subproblem) and pop (to take and
-remove a subproblem) operations, each of which has access to the value of the incumbent's
+(the set of live nodes). It supports the push operation (to add a subproblem)
+and the pop operation (to take and remove a subproblem).
+When performing each operation, the container has access to the value of the incumbent's
 score (objective function value) at the time of push/pop (if an incumbent exists).
 
-It is defined in the library code as follows:
+The trait \texttt{BnbAwareContainer} is defined in the library code as follows:
 
 \begin{lstlisting}[caption=Trait \texttt{BnbAwareContainer}]
 pub trait BnbAwareContainer<S: Subproblem> {
@@ -235,7 +238,7 @@ The function accepts a \texttt{BnbAwareContainer} containing the initial subprob
 solve. Throughout the solving process, the container is used as the storage for the set of
 live nodes.
 
-Returns the subproblem corresponding to the best solution (i.e., the one with the
+It returns the subproblem corresponding to the best solution (i.e., the one with the
 highest value of the objective function). If no subproblem evaluates to an objective
 function value (\texttt{SubproblemResolution::Solved}) before the container refuses to pop
 a new subproblem, the function returns \texttt{None}.

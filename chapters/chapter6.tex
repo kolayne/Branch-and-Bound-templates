@@ -3,9 +3,10 @@
 
 This chapter presents the implementation artifacts and analyzes the library by comparing
 solvers implemented with and without use of the library by their code size and
-complexity (based on cyclomatic complexity, a metric commonly used
-in the industry \cite{ebert2016cyclomatic}), performance, and subjective
-implementation difficulty.
+complexity, performance, and subjective implementation difficulty. Cyclomatic complexity
+\cite{ebert2016cyclomatic} is used as a metric of code complexity,
+despite the controversy around it, as it is extensively used in the industry
+\cite{ebert2016cyclomatic}.
 
 \section{Implementation artifacts}
 
@@ -27,12 +28,13 @@ native solver.
 
 \subsection{Code and implementation complexity}
 
-The source code for both problem solvers was organized in three modules: the main file
-for a library-based solver, the main file for a native solver, and a file with common code
-implementing types and basic methods that are used by both solvers.
+The source code of solvers for both problem was organized in three modules:
+the main file of the library-based solver, the main file of the native solver, and a file
+with core code implementing types and basic methods that are used by both solvers.
 
-The amount of code per file for both solvers (excluding empty lines, comments, and code for
-input parsing and unit testing) can be found in table \ref{tab:loc_solvers}.
+The amount of code per file for solvers of both problems can be found in table
+\ref{tab:loc_solvers} (empty lines, comments, and code related to input parsing
+and unit testing are excluded).
 
 \begin{table}[h!]
  \centering
@@ -42,7 +44,7 @@ input parsing and unit testing) can be found in table \ref{tab:loc_solvers}.
 
  \begin{tabular}{|c||c|c|c|}
   \hline
-  & library-based solver code & native solver code & common code \\
+  & library-based solver code & native solver code & core code \\
   \hline
   CNF SAT & 77 & 66 & 133 \\
   \hline
@@ -52,8 +54,8 @@ input parsing and unit testing) can be found in table \ref{tab:loc_solvers}.
 \end{table}
 
 The values of the cyclomatic complexity metric \cite{ebert2016cyclomatic} for functions
-implemented in the solvers (excluding code for input parsing and unit testing) can be found
-in tables \ref{tab:CC_cnfsat} and \ref{tab:CC_knapsack}.
+implemented in the solvers can be found in tables \ref{tab:CC_cnfsat} and
+\ref{tab:CC_knapsack} (functions related to input parsing and unit testing are excluded).
 
 \begin{table}
  \centering
@@ -73,7 +75,7 @@ in tables \ref{tab:CC_cnfsat} and \ref{tab:CC_knapsack}.
   & \texttt{solve} & 8 & 2 \\
   & \texttt{main} & 3 & 1 \\
   \hline
-  \multirow{5}*{examples/dpll\_common/mod.rs} & \texttt{eval} & 20 & 8 \\
+  \multirow{5}*{examples/dpll\_core/mod.rs} & \texttt{eval} & 20 & 8 \\
   & \texttt{examples\_main} & 18 & 5 \\
   & \texttt{assert\_solves} & 9 & 3 \\
   \hline
@@ -98,7 +100,7 @@ in tables \ref{tab:CC_cnfsat} and \ref{tab:CC_knapsack}.
   & \texttt{best\_candidate} & 7 & 2 \\
   & \texttt{main} & 3 & 1 \\
   \hline
-  \multirow{11}*{examples/knapsack\_common/mod.rs} & \texttt{pop\_too\_heavy} & 9 & 3 \\
+  \multirow{11}*{examples/knapsack\_core/mod.rs} & \texttt{pop\_too\_heavy} & 9 & 3 \\
   & \texttt{bound} & 13 & 3 \\
   & \texttt{examples\_main} & 12 & 2 \\
   & \texttt{new} & 13 & 1 \\
@@ -113,10 +115,10 @@ in tables \ref{tab:CC_cnfsat} and \ref{tab:CC_knapsack}.
  \end{tabular}
 \end{table}
 
-Overall, the library-based implementation of the CNF SAT solver (excluding the common code)
+Overall, the library-based implementation of the CNF SAT solver (excluding core code)
 was $\approx 16.7\%$ longer (77 lines compared to 66 lines in the native implementation),
-while the library-based implementation of the knapsack problem solver (excluding the
-common code) was $37.5\%$ shorter (32 lines compared to 44 lines in the native
+while the library-based implementation of the knapsack problem solver (excluding
+core code) was $37.5\%$ shorter (32 lines compared to 44 lines in the native
 implementation). So, there is no clear relation betwen the usage of the library and the
 code size.
 
@@ -178,7 +180,7 @@ the range $[A - B; A + B]$.
   \hline
   Test name & library-based solver time, s & native solver time, s \\
   \hline
-  Test 8 & $\approx 0.293\pm 0.009$ & $\approx 0.379\pm 0.006$ \\
+  Test 8 & $\approx 0.379\pm 0.006$ & $\approx 0.293\pm 0.009$ \\
   \hline
  \end{tabular}
 \end{table}
