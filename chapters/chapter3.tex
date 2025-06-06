@@ -29,7 +29,7 @@ be used in place of instances of base classes; interface of a polymorphic parame
 explicitly defined in code (the base class), type compatibility is checked
 at compile time, and method calls are resolved at run time. As for template programming,
 no explicit interface definition is required (although may be specified through the
-Constraints and Concepts feature, starting with C++20
+\emph{Constraints and Concepts} feature, starting with C++20
 \footnote{\url{https://en.cppreference.com/w/cpp/language/constraints}}):
 when substituting concrete types for polymorphic types, the compiler will check that all
 operations performed in the function body are valid for the substituted types. For every
@@ -44,6 +44,11 @@ For implementation of the library, I selected the Rust programming language. Rus
 compiled general-purpose programming language with a focus on performance and memory safety
 \cite{klabnik2023rust}.
 
+I selected Rust for its rich type system, which enables programmer to enforce more invariants
+at compile time (e.g., with Algebraic Data Types \cite{klabnik2023rust}).
+With this work, I would also like to demonstrate that Rust is a suitable language
+for implementations that are heavily based on generic programming.
+
 In Rust, polymorphism is achieved through explicit definition of a
 \emph{trait} \cite{klabnik2023rust} (which is conceptually similar to a Java interface or a
 C++ concept),
@@ -53,11 +58,6 @@ resolution both in compile-time (like with C++ templates, optimizing execution p
 and run-time (like with Java interfaces or C++ inheritance, optimizing the executable file
 size). The programmer may decide which method resolution mechanism to use for each generic
 function parameter.
-
-I selected Rust for its memory safety, flexible generic programming mechanisms, and rich
-type system that enables programmer to enforce more invariants at compile time (e.g., with
-Algebraic Data Types \cite{klabnik2023rust}). With this work, I would also like to demonstrate
-that Rust is well suited for generic programming.
 
 My library is implemented in pure Rust, relying mostly on the standard library, with an
 external dependency on the \texttt{binary\_heap\_plus}
