@@ -164,10 +164,12 @@ Following the terminology of \cite{clausen1999principles}:
 
 \subsubsection{Backtracking and other special cases}
 
-% TODO: LIE LIE LIE LIE
-% TODO: clausen1999principles does not mention backtracking at all!!!!!
-According to \cite{clausen1999principles}, \textbf{Backtracking} is a special case of the
-Branch \& Bound method with DFS used as the selection strategy.
+According to \cite{shilov2012verifmono}, \cite{indriyono2024sudoku}, \textbf{backtracking}
+is a method to solve optimization problem in a way similar to the one described above, except
+that a depth-first search is used. So, it can be seen as a special case of branch \& bound
+with the specific traverse order. Although the term \emph{backtracking} is sometimes used
+to refer to any kind of branch and bound \cite{finkel1987distrib}, in the presented work
+\emph{backtracking} refers to a kind of branch \& bound with the depth-first tree traversal.
 
 Brute-force search for optimization problems could be seen as another special case of the
 Branch \& Bound method with the bounding function $g(x) = -\infty$.
