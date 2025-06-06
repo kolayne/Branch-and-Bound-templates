@@ -96,7 +96,11 @@ Nevertheless, certain implementation aspects could be improved to achieve better
 For example, the library accepts new nodes of a branched subproblem as an object of type
 \texttt{Box<dyn Iterator<Item = Node>>}. Because of that, on every branching, the solver
 is required to allocate a new \texttt{Box} object.
-According to profiling, these allocations are taking about
+According to profiling
+\footnote{Profiling was performed using \emph{cargo-flamegraph}
+(\url{https://github.com/flamegraph-rs/flamegraph})
+with the \emph{perf} back-end (\url{https://perfwiki.github.io/main/})},
+these allocations are taking about
 $0.53\% - 0.97\%$ of the execution time in the Knapsack problem solver,
 and could take longer on larger samples.
 
