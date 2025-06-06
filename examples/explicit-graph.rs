@@ -15,7 +15,7 @@ impl bb::Subproblem for GraphNode {
 
     fn branch_or_evaluate(&mut self) -> branch_and_bound::SubproblemResolution<GraphNode, i32> {
         if self.bound < 5 {
-            eprintln!("I should not be visited in Best-First-Search");
+            eprintln!("I should not be visited in Greedy search");
         } else {
             eprintln!("Node with bound {0} visited", self.bound)
         }
@@ -96,13 +96,13 @@ fn main() {
         bb::solve(graph(), bb::TraverseMethod::BreadthFirst)
     );
 
-    println!("Now trying best-first search");
+    println!("Now trying greedy search");
     println!(
         "Max node: {:#?}",
-        bb::solve(graph(), bb::TraverseMethod::BestFirst)
+        bb::solve(graph(), bb::TraverseMethod::Greedy)
     );
 
-    println!("Trying custom-order (should be same as best-first!)");
+    println!("Trying custom-order (should be same as greedy!)");
     println!(
         "Max node: {:#?}",
         bb::solve(
@@ -114,7 +114,7 @@ fn main() {
         )
     );
 
-    println!("Trying custom-order, worst-first search");
+    println!("Trying custom-order, worst-first greedy search");
     println!(
         "Max node: {:#?}",
         bb::solve(

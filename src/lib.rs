@@ -142,18 +142,19 @@ pub enum TraverseMethod<Node> {
     /// Nodes of the same layer will be processed in the order they are returned by the
     /// `Subproblem::branch_or_evaluate` method.
     ///
-    /// For typical boundary functions, uses significantly less memory compared to best-first
+    /// For typical boundary functions, uses significantly less memory compared to greedy
     /// and breadth-first search.
     DepthFirst,
 
     /// Breadth-first search (BFS): Traverses the subproblem tree layer by layer.
     /// The processing order among nodes on the same layer is unspecified.
     ///
-    /// For typical boundary functions, behaves similar to best-first search but uses
+    /// For typical boundary functions, behaves similar to greedy search but uses
     /// a simpler internal data structure to store subproblems to be processed.
     BreadthFirst,
 
-    /// Best-first search (BeFS): traverses the tree in many directions simultaneously,
+    /// Greedy search (also known as best-first search): traverses the tree in many
+    /// directions simultaneously,
     /// on every iteration selects and evaluates the subproblem with the best value of
     /// the boundary function. All its children become candidates for the next selection
     /// (as long as their boundary value is better than the incumbent's objective score).
@@ -162,9 +163,9 @@ pub enum TraverseMethod<Node> {
     ///
     /// For typical boundary functions, behaves similar to breadth-first search but selects
     /// subproblems more optimally.
-    BestFirst,
+    Greedy,
 
-    /// Like best-first search but selects subproblems in the custom order, based on the
+    /// Like greedy search but selects subproblems in the custom order, based on the
     /// given comparator `.cmp`.
     ///
     /// Processes subproblems in the order specified by `.cmp`: subproblems that compare
@@ -203,7 +204,7 @@ pub fn solve<Node: Subproblem>(initial: Node, method: TraverseMethod<Node>) -> O
     use TraverseMethod::*;
 
     match method {
-        BestFirst => {
+        Greedy => {
             let pqueue = BinaryHeapExt {
                 heap: binary_heap_plus::BinaryHeap::from_vec_cmp(
                     vec![initial],

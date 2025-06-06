@@ -34,7 +34,7 @@ impl Subproblem for KnapsackSubproblem {
 }
 
 fn solve(problem: KnapsackSubproblem) -> Option<KnapsackSubproblem> {
-    branch_and_bound::solve(problem, branch_and_bound::TraverseMethod::BestFirst)
+    branch_and_bound::solve(problem, branch_and_bound::TraverseMethod::Greedy)
 }
 
 fn main() {
