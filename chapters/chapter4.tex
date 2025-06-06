@@ -99,7 +99,7 @@ tree. It is defined in the library code as follows:
 pub enum TraverseMethod<Node> {
     DepthFirst,
     BreadthFirst,
-    BestFirst,
+    Greedy,
     Custom {
         cmp: Box<dyn Fn(&Node, &Node) -> Ordering>,
         cmp_superceeds_bound: bool,
@@ -120,7 +120,7 @@ Variants of \texttt{TraverseMethod} represent the following:
     Subproblems to be processed are internally stored in a deque (Rust's standard collection
     \texttt{VecDeque});
 
- \item \texttt{BestFirst} -- subproblems are processed in the order according to the following
+ \item \texttt{Greedy} -- subproblems are processed in the order according to the following
     rule: on every iteration, the most promising subproblem (i.e., the one with highest
     boundary function value) is selected from the set of live nodes and processed. \\
     Subproblems to be processed are internally stored in a binary heap (implemented in the
@@ -141,8 +141,8 @@ Variants of \texttt{TraverseMethod} represent the following:
     \texttt{cmp\_superceeds\_bound} flag to tell the library that the order defined by
     the comparison function is stronger than the order defined by the boundary function
     (meaning that ${\forall a, b: a >_{cmp} b \implies a.bound() > b.bound()}$).
-    In that case, the same early termination mechanism is applied as for the \texttt{BestFirst}
-    method. Otherwise, no early termination is performed.
+    In that case, the same early termination mechanism is applied as for the \texttt{Greedy}
+    search. Otherwise, no early termination is performed.
 \end{itemize}
 
 \subsection{Function \texttt{solve}}

@@ -135,7 +135,8 @@ Following the terminology of \cite{clausen1999principles}:
         \begin{itemize}
             \item Breadth-first search (BFS) evaluates nodes of the tree layer by layer;
             \item Best-first search (BeFS) greedily selects a node with the lowest value of the
-                bounding function out of the live nodes;
+                bounding function out of the live nodes; in the presented work this method
+                is referred to as \emph{greedy} search;
             \item Depth-first search (DFS) walks the tree in a DFS manner.
         \end{itemize}
 
@@ -229,7 +230,7 @@ depending on the selection strategy, e.g., in \cite{breuel2003geometric}.
 In special cases, other technical implementations are used, although the computation logic
 is roughly the same. For example, in \cite{lalami2012gpu}, authors implement a
 breadth-first search with items "sorted according to decreasing profit per weight ratio"
-(for most natural definitions of boundary functions, it is the same as best-first-search),
+(for most natural definitions of boundary functions, it is the same as greedy search),
 however, because in this work computations are parallelized with a GPU
 (with some parts performed on a CPU), the technical implementation is somewhat more
 sophisticated than a mere loop on a priority queue.
