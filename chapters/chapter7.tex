@@ -45,7 +45,7 @@ it can simplify the formal verification of solvers based on the library, as it w
 enough to prove that the required properties hold for the implemented methods.
 This is similar to the approch
 of authors of \cite{narkawicz2013formalnasa}, \cite{smith2015rigorous}, but the library
-implemented in the current work is more generic and, thus, allows to solve a wider range
+implemented in the presented work is more generic and, thus, allows to solve a wider range
 of problems.
 
 However, the library genericness is making it harder to verify it. For example,
@@ -131,7 +131,7 @@ on the library user side.
 
 \subsubsection{Subproblem generation on branch}
 
-According to the current library design, a user-defined subproblem, when branching,
+According to the presented library design, a user-defined subproblem, when branching,
 must generate and return all of its subproblems at the same time. While it perfectly fits
 the branch-and-bound method, it does not alighn well with the backtracking method, where
 subproblems are typically generated one by one, on demand. For example, by only ever

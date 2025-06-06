@@ -205,8 +205,9 @@ A custom \texttt{BnbAwareContainer} can be useful to integrate features such as:
  \item Subproblem filtering based on the score: skipping pushes or pops of rejectable
     subproblems (subproblems when boundary value lower than the incumbent's score). \\
     Note: a container that discards rejectable subproblems on push implements the \emph{eager}
-    evaluation strategy; a container that discards rejectable subproblems on pop implements
-    the \emph{lazy} evaluation strategy;
+    evaluation strategy \cite{clausen1999principles}; a container that discards rejectable
+    subproblems on pop implements the \emph{lazy} evaluation strategy
+    \cite{clausen1999principles};
  \item Local exit \cite{narkawicz2013formalnasa}: discard subproblems that are too deep in
     the virtual subproblem tree;
  \item Global exit \cite{narkawicz2013formalnasa}: stop the solution attempts after the given
