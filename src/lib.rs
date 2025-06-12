@@ -161,8 +161,10 @@ pub enum TraverseMethod<Node> {
     ///
     /// The processing order among subproblems with the same boundary value is unspecified.
     ///
-    /// For typical boundary functions, behaves similar to breadth-first search but selects
-    /// subproblems more optimally.
+    /// For typical boundary functions, behaves similar to depth-first search but selects
+    /// subproblems more optimally (which improves performance given a tight enough boundary
+    /// function) and uses a more complex data structure (which degrades performance,
+    /// e.g., when no solution exists).
     Greedy,
 
     /// Like greedy search but selects subproblems in the custom order, based on the
