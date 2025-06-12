@@ -5,15 +5,16 @@ Branch-and-bound and backtracking are methods to design algorithms to
 solve optimization problems. Algorithms based on the methods act by repeatedly splitting
 problems into subproblems, evaluating them, and, for each subproblem, eventually
 either arriving at a candidate solution or determining that no good
-enough solution exists compared to the current best candidate. The goal of the
+enough solution exists compared to the current best candidate. \\
+The goal of the
 presented work is to create a generic library that implements common
 components of backtracking and branch-and-bound, allowing users to
-implement just the problem-specific parts of their algorithm. For the
-library implementation, the Rust programming language was selected,
+implement just the problem-specific parts of their algorithm. \\
+For the library implementation, the Rust programming language was selected,
 primarily, for its rich type system. The efficiency of the library was tested
 on two problems: the boolean satisfiability problem and the knapsack problem;
 for both problems, library-based solvers were tested against solvers implemented
-from scratch.
+from scratch. \\
 The comparison of the solvers demonstrated that the use of the library might lead to
 lower performance but cleaner code (lower cyclomatic complexity).
 Possible applications of the library besides its initial design purpose
