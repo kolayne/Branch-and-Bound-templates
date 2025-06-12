@@ -8,6 +8,9 @@ complexity, performance, and subjective implementation difficulty. Cyclomatic co
 despite the controversy around it, as it is extensively used in the industry
 \cite{ebert2016cyclomatic}.
 
+The last section compares the generic features supported by the presented library and
+other libraries that implement branch-and-bound or backtracking.
+
 \section{Implementation artifacts}
 
 The source code of the library and all of the examples (solvers) is electronically
@@ -221,3 +224,95 @@ Note: because performance was not a primary focus during the development of the 
 some decisions during its implementation were made in the favor of easy usage rather than
 high performance. The performance of the library can be improved by revisiting these
 decisions, as well as by profiling and optimizing library code.
+
+\section{Comparison against other generic solvers}
+
+\label{sec:feature_cmp}
+
+This section analyzes the library feature set by comparing it to other libraries for
+backtracking and branch-and-bound. Libraries used in the comparison are from works
+cited in chapter \ref{chap:lr}, as well as open-source libraries that were found
+with the 'backtracking' and 'branch bound' search queries on either GitHub
+or crates.io.
+
+The table below presents the assesment of the libraries and lists all the search features
+that were implemented in at least one of the libraries. The table contains the following
+columns:
+\begin{itemize}
+ \item \textbf{NAME} - the library name (e.g., repository name on GitHub
+      or crate name on crates.io) and/or the paper where it is presented;
+ \item \textbf{PL} - the programming language of the library implementation;
+ \item \textbf{DOC} - whether documentation is available, either together with the source code
+      or on a separate resource ('Paper only' indicates that the library interface
+      is only documented in the paper);
+ \item \textbf{EXAMP} - whether code examples of the library usage are available;
+ \item \textbf{ORDER} - supported traverse orders, out of:
+      Dfs, Bfs, Greedy (aka best-first search), Custom order;
+ \item \textbf{OPAQ} - whether opaque types are supported for storing state, i.e., the user
+      may use arbitrary types to represent subproblems and solutions, and the library does
+      not depend on a particular state structure;
+ \item \textbf{EXIT} - whether local exit and global exit \cite{narkawicz2013formalnasa}
+      are supported
+      ('Partial' means that only one of the two is supported);
+ \item \textbf{EARLY TERM.} - whether early termination with greedy search or custom-order
+      search is supported;
+ \item \textbf{LAZ/EAG} - whether the choice between lazy and eager evaluation strategies
+      is supported;
+ \item \textbf{TOLER} - whether tolerance is supported, i.e., the solver may return an
+      imprecise solution with an error value not exceeding the given tolerance;
+ \item \textbf{LASER} - whether for depth-first search the library allows for one-at-a-time
+      subproblem generation instead of requiring to generate all subproblems at once
+      (this is referred to as the \emph{laser} search in \cite{johnson1988modular});
+      this feature is discussed in more detail in section \ref{sub:design_improvements}.
+ \item \textbf{EXTE} - whether library extension is supported, e.g., customizing the
+      search process, using an alternative container for subproblem storage, etc.
+\end{itemize}
+
+The value '?' in the table indicates that the answer is not clear from the available
+documentation, examples, or the library description. The value 'Extendable' means that the
+library allows for the feature support via an extension.
+
+\renewcommand{\thempfootnote}{\arabic{mpfootnote}}
+\begin{sidewaystable}
+\caption{Feature set comparison for branch-and-bound and backtracking libraries}
+\label{tab:feature_cmp}
+
+\begin{adjustbox}{width=\textwidth}
+\begin{threeparttable}
+  \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}
+  \hline
+  \textbf{NAME} & \textbf{PL} & \textbf{DOC} & \textbf{EXAMP} & \textbf{ORDER} & \textbf{OPAQ} & \textbf{EXIT} & \textbf{EARLY TERM.} & \textbf{LAZ/EAG} & \textbf{TOLER} & \textbf{LASER} & \textbf{EXTE} \\
+  \hline
+  branch\_bound\_method \footnote{\url{https://crates.io/crates/branch\_bound\_method}} & Rust & \xmark & \xmark & ? & ? & ? & ? & ? & ? & ? & ? \\
+  \hline
+  branch-and-bound \footnote{\url{https://github.com/UIUC-optimization/branch-and-bound}} & C++ & \xmark & \xmark & Dfs, Bfs, Greedy & ? & ? & ? & ? & ? & ? & ? \\
+  \hline
+  bnb \footnote{\url{https://crates.io/crates/bnb}} & Rust & \cmark & \xmark & Dfs, Bfs, Greedy & \cmark & \xmark & \xmark & \xmark & \xmark & \xmark & \xmark \\
+  \hline
+  backtrack* \footnote{\url{https://crates.io/crates/backtrack}} & Rust & \cmark & \xmark & Bfs & \xmark & \xmark & \xmark & \xmark & \xmark & \xmark & \xmark \\
+  \hline
+  backtracking* \footnote{\url{https://crates.io/crates/backtracking}} & Rust & \cmark & \cmark & Bfs & \xmark & \xmark & \xmark & \xmark & \xmark & \xmark & \xmark \\
+  \hline
+  BranchAndBound.jl \footnote{\url{https://github.com/kibaekkim/BranchAndBound.jl}} & Julia & \xmark & \cmark & Greedy & \cmark & Partial & \xmark & \xmark & \xmark & \xmark & \xmark \\
+  \hline
+  pybnb \footnote{\url{https://github.com/ghackebeil/pybnb}} & Python & \cmark & \cmark & Dfs, Bfs, Greedy, Custom & \cmark & \xmark & \xmark & \xmark & \cmark & \xmark & \xmark \\
+  \hline
+  Kodiak \footnote{\url{https://github.com/nasa/Kodiak}} \cite{narkawicz2013formalnasa} & C++ & Paper only & \cmark & Dfs & \cmark & \cmark & \xmark & \xmark & \xmark & \xmark & \xmark \\
+  \hline
+  ddbnb \footnote{\url{https://github.com/distcomp/ddbnb}} \cite{voloshinov2017implementation} & \makecell{Python,\\C++,\\Erlang} & \xmark & \xmark & N/A\footnote{Distributed implementation} & ? & \xmark & \xmark & \xmark & \xmark & \xmark & \xmark \\
+  \hline
+  (Finkel, Manber) \cite{finkel1987distrib} & Modula & \cmark & \cmark & N/A\footnote{Distributed implementation} & ? & \xmark & \xmark & \xmark & \xmark & \xmark & \xmark \\
+  \hline
+  (Johnson) \cite{johnson1988modular} & ? & Paper only & \xmark & Dfs, Bfs & ?  & ? & ? & ? & ? & \cmark & \xmark \\
+  \hline
+  Presented work & Rust & \cmark & \cmark & Dfs, Bfs, Greedy, Custom & \cmark & Extendable & \cmark & Extendable & \xmark & \xmark & \cmark \\
+  \hline
+  \end{tabular}
+
+  \begin{tablenotes}
+    %\small
+    \item * Only binary objective function is supported.
+  \end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{sidewaystable}

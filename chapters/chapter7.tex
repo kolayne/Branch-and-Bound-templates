@@ -131,7 +131,16 @@ Instead, the library could explicitly allow non-static lifetime for \texttt{Subp
 objects in \texttt{SubproblemResolution}, in which case no extra effort would be needed
 on the library user side.
 
+\subsubsection{Tolerance support}
+
+During the feature set assessment (section \label{sec:feature_cmp}), the tolerance
+feature was discovered in one of the libraries, which was not implemented in the
+presented library. To extend the feature set of the library, tolerance support
+could be implemented.
+
 \subsection{Design improvements}
+
+\label{sub:design_improvements}
 
 \subsubsection{Subproblem generation on branch}
 
@@ -170,3 +179,6 @@ community crates
 \footnote{\url{https://docs.rs/lending-iterator/latest/lending_iterator/}}
 \footnote{\url{https://docs.rs/streaming-iterator/latest/streaming_iterator/}},
 so their use in the library interface might complicate the API.
+
+Note: the support for one-at-a-time subproblem generation
+is referred as LASER in the feature set assessment section (table \ref{tab:feature_cmp}).
