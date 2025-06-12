@@ -221,8 +221,8 @@ There were implementations of both backtracking-based and branch-and-bound-based
 for specific problems
 (e.g., \cite{bard1990bilevel}, \cite{breuel2003geometric}, \cite{lalami2012gpu}),
 as well as implementations generalized to varying extent
-(e.g., \cite{narkawicz2013formalnasa}, \cite{smirnov2017concur}, \cite{finkel1987distrib},
-\cite{prenner1972proglangs}, \cite{johnson1988modular}).
+(e.g., \cite{narkawicz2013formalnasa}, \cite{voloshinov2017implementation},
+\cite{finkel1987distrib}, \cite{prenner1972proglangs}, \cite{johnson1988modular}).
 
 In most cases, backtracking is implemented with recursive function calls,
 e.g., in \cite{narkawicz2013formalnasa}, \cite{bard1990bilevel},
@@ -239,7 +239,7 @@ sophisticated than a mere loop on a priority queue.
 
 Distributed branch-and-bound search is another example in which the technical implementation
 becomes more complicated, although it follows the same general model. For example,
-in \cite{smirnov2017concur}, worker machines are assigned subtrees of the main search tree;
+in \cite{voloshinov2017implementation}, worker machines are assigned subtrees of the main search tree;
 during the computation, they only exchange their incumbent values. In particular, while solving one
 problem, workers can use different selection strategies, which can improve overall performance.
 In \cite{finkel1987distrib}, a different distributed algorithm is presented: the branching and
@@ -282,13 +282,14 @@ as well as works that implement and/or verify versions of the branch-and-bound a
 generalized to some extent
 \cite{narkawicz2013formalnasa}, \cite{johnson1988modular}
 or designed for special computation environment, e.g., GP$^2$U \cite{lalami2012gpu} or
-distributed versions of the algorithm \cite{smirnov2017concur}, \cite{finkel1987distrib}.
+distributed versions of the algorithm \cite{voloshinov2017implementation},
+\cite{finkel1987distrib}.
 
 However, only in \cite{johnson1988modular} did the authors present an approach that is fully
 general both in the problem to solve (as opposed to solutions designed for solving, e.g., global
 optimization problems, such as \cite{narkawicz2013formalnasa}) and in the computation method
 (as opposed to solutions designed for, e.g., distributed computation, such as
-\cite{smirnov2017concur}, \cite{finkel1987distrib}).
+\cite{voloshinov2017implementation}, \cite{finkel1987distrib}).
 
 In the presented work, I
 implement a template library in the Rust programming language that does not rely
