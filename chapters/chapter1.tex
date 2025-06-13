@@ -10,16 +10,19 @@ and present the goal of the presented work.
 Backtracking and branch-and-bound (B\&B) methods are methods used in
 algorithms for solving discrete optimization problems. Both methods are also used for solving
 % TODO: IS THERE A TERM FOR SUCH PROBLEMS??
-algorithmic problems where it is sufficient to find a single solution under given constraints
-(e.g., Sudoku) -- such problems can be seen as special cases of discrete optimization with
-trivial objective functions.
+problems where it is sufficient to find a single solution under given constraints
+(e.g., Sudoku). Such problems can be seen as special cases of discrete optimization with
+binary objective functions.
 
-Both methods solve a problem by splitting it into subproblems recursively until reaching a
-subproblem that is trivial enough to be solved directly. During this process, generated
-subproblems are evaluated, taking into account the current best solution
-candidate (\emph{incumbent}): if it can be determined that the best potentially
-achievable solution to a subproblem is not better than the incumbent, that subproblem is
-rejected, and its subproblems are not considered.
+Both methods solve a problem by recursively splitting it into subproblems. Generated
+subproblems are evaluated: if it can be determined that the best potentially achievable
+solution to a subproblem is not better than the current best solution candidate
+(\emph{incumbent}), the subproblem is discarded
+and its subproblems are not considered.
+
+If a generated subproblem is a \emph{leaf} subproblem, meaning that it can be solved directly
+without being split, it is solved. If the objective function value at the solution is better
+than that in the incumbent, the solution becomes the new incumbent.
 
 % TODO: IS THERE A TERM FOR SUCH PROBLEMS?? (I called them `single-solution` here)
 In the special case of a single-solution problem (such as Sudoku), no candidate solution
@@ -29,15 +32,16 @@ all other subproblems can be rejected, and the algorithm can terminate.
 The primary difference between the backtracking and branch-and-bound methods
 is in the order in which subproblems are generated and evaluated. A backtracking-based
 algorithm, given a problem, will first generate and fully evaluate the first subproblem
-of the given problem, and process all of its subproblems until all the candidate solutions
-are found or all the remaining subproblems are rejected; only after that will it proceed with
-the second (and further) subproblem(s) of the given problem. Overall, this process is similar to
-a depth-first search in a graph. In turn, a branch-and-bound-based algorithm, given a problem,
+of the given problem, and process all of its subproblems; only after that will it proceed with
+the second (and further) subproblem(s) of the given problem. Overall, the subproblem
+consideration order is similar to depth-first search in a graph.
+
+On the other hand, a branch-and-bound-based algorithm, given a problem,
 will generate all of its subproblems and add them to the set of subproblems to be considered
 (\emph{live nodes}). On every iteration, the algorithm will select a subproblem from the set,
-following some rule (e.g., first-come-first-served). Overall, this is similar to a breadth-first
-search in a graph, although other selection rules or additional heuristics can be applied to
-improve performance.
+following a \emph{selection strategy}, e.g., first-come-first-served. Subproblem consideration
+order of branch-and-bound can, thus, be similar to breadth-first search in a graph, or
+something else, depending on the selection strategy.
 
 \section{Problem examples}
 
@@ -48,9 +52,9 @@ given a Boolean formula in the conjunctive normal form, find the set of variable
 for which the formula is satisfied (i.e., evaluates to true), if there is any.
 
 For example, for the formula $a \land \neg b$, the assignment $a=\text{T}, b=\text{F}$
-satisfies the formula; while the formula $a \land \neg a$ is \emph{unsatisfiable}.
+satisfies the formula, while the formula $a \land \neg a$ is \emph{unsatisfiable}.
 
-The boolean satisfiability problem can be solved, e.g., with the following backtracking-based
+The boolean satisfiability problem can be solved with the following backtracking-based
 algorithm: a recursive function accepts a formula, the current variable assignment
 (initially, an empty set), and a queue of variables left to assign. The function pops a
 variable from the queue and gets a variable to assign a value to. For every possible variable
@@ -58,9 +62,15 @@ value (namely, true and false), the function tries to assign it to the variable
 and solve the problem recursively. If the solution is not found, another assignment is
 attempted. The first solution found is returned.
 
-Here is a pseudo-code implementation of the function:
+\sloppy
+The function is implemented in pseudo-code in algorithm \ref{alg:cnf_sat},
+where $assign(assignment, var, val)$ returns a modified copy of $assignment$ with the value
+of variable $var$ assigned to $val$; $unsatisfied(formula, assignment)$ evaluates the formula
+and returns true if the formula is known to be unsatisfied, given the variable assignment.
 
 \begin{algorithm}
+\caption{CNF SAT solving algorithm based on the backtracking method, pseudo-code}
+\label{alg:cnf_sat}
 \begin{algorithmic}
 \Procedure{solve}{formula, assignment, varsLeft}
     \If {$varsLeft = \varnothing$}
@@ -87,27 +97,34 @@ Here is a pseudo-code implementation of the function:
 \end{algorithmic}
 \end{algorithm}
 
-where $assign(assignment, var, val)$ returns the updated assignment by setting the value
-of variable $var$ to $val$; $unsatisfied(formula, assignment)$ evaluates the formula and
-returns true if the formula is already known to be unsatisfied, given the variable assignment.
-
 \subsection{Knapsack problem}
 
 The Knapsack problem is as follows: given a lifting capacity value and a set of items,
 each having a weight and a price, find a subset of items that has the maximum possible
-cumulative price given that cumulative weight shall not exceed the lifting capacity value.
+cumulative price given that the cumulative weight shall not exceed the lifting capacity value.
 
-The Knapsack problem can be solved, e.g., with the following branch-and-bound-based algorithm:
+The Knapsack problem can be solved with the following branch-and-bound-based algorithm:
 a function maintains the current best solution (initially, an empty knapsack) and a queue where
-each entry represents a pre-packed Knapsack and is a triple of:
+each entry represents a pre-packed Knapsack and is a triple:
 price accumulated, lifting capacity left, set of unprocessed items. On every iteration,
 an entry is popped from the queue and evaluated: if it has a potential of surpassing the
-current best solution (see below for details), an item is extracted from the set of unprocessed items, and two options are considered: including the item (if possible) and not including it.
+current best solution (see below for details), an item is extracted from the set of unprocessed
+items, and two options are considered: including the item (if possible) and not including it.
 The corresponding entries are added to the queue.
 
-Here is a pseudo-code implementation of the function:
+\sloppy
+The function is implemented in pseudo-code in algorithm \ref{alg:knapsack},
+where $maxAchievablePrice$ is a function of entry that gives an upper boundary of the maximum
+price achievable from the given state. One way to implement it (the one that was implemented
+as part of the presented work) is to try to greedily include all remaining items starting with
+the most valuable ones, until the lifting capacity value is \emph{exceeded}
+(i.e., the constraint is no longer satisfied). It can be shown that the cumulative price
+achieved in this case is an upper boundary of the best value that can be achieved while
+satisfying the constraint.
 
 \begin{algorithm}
+\caption{Knapsack problem solving algorithm based on the branch-and-bound method, pseudo-code}
+\label{alg:knapsack}
 \begin{algorithmic}
 \Procedure{solve}{items, maxWeight}
     \State $queue \gets \{(0, maxWeight, items)\}$
@@ -128,14 +145,6 @@ Here is a pseudo-code implementation of the function:
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
-
-where $maxAchievablePrice$ is a function of entry that gives an upper boundary of the maximum
-price achievable from the given state. One way to implement it (the one that was implemented
-as part of the presented work) is to try to greedily include all remaining items starting with
-the
-most valuable ones, until the lifting capacity value is \emph{exceeded} (i.e., the constraint
-is no longer satisfied). It can be shown that the cumulative price achieved in this case is
-an upper boundary of the best value that can be achieved while satisfying the constraint.
 
 \section{Goal of study}
 
