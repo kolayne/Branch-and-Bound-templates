@@ -3,18 +3,246 @@
 \chapter{Library documentation}
 \label{appex:libdoc}
 
-This chapter contains the documentation for the library version 4.0.1 converted to pdf.
-Documentation for other versions is available electronically at
+This chapter contains the documentation for the library version 4.0.1.
+Documentation for all versions including the most recent one is available electronically at
 \url{https://docs.rs/branch-and-bound/}.
 
-\includepdf[pages=-,offset=75 -60]{../lib-docs/Crate branch_and_bound.pdf}
+\section*{Crate branch\_and\_bound}
 
-\includepdf[pages=-,offset=75 -80]{../lib-docs/Trait Subproblem.pdf}
+This library implements generic branch-and-bound and backtracking solver.
 
-\includepdf[pages=-,offset=75 -80]{../lib-docs/Enum SubproblemResolution.pdf}
+Branch-and-bound (and backtracking, which is its special case) is the method of solving an optimization problem by recursively breaking a problem down to subproblems and then solving them. Unlike brute-force, branch-and-bound will discard a subproblem if it discovers that the best potentially obtainable solution to this subproblem is not better than the current best solution (aka incumbent).
 
-\includepdf[pages=-,offset=75 -80]{../lib-docs/Enum TraverseMethod.pdf}
+To use the library, one shell implement a type that represents a problem (subproblem) and implement the \hyperlink{apx:Subproblem}{\texttt{Subproblem}} trait for it.
 
-\includepdf[pages=-,offset=75 -80]{../lib-docs/Function solve.pdf}
+One can then \hyperlink{apx:solve}{\texttt{solve}} an instance of problem using one of the predefined methods (DFS, BFS, BeFS, etc) or use \hyperlink{apx:solve_with_container}{\texttt{solve\_with\_container}}, through which custom strategies can be implemented.
 
-\includepdf[pages=-,offset=75 -80]{../lib-docs/Trait BnbAwareContainer.pdf}
+\subsection*{Re-exports}
+
+\hyperlink{apx:BnbAwareContainer}{\texttt{pub use bnb\_aware\_containers::BnbAwareContainer;}}
+
+\subsection*{Enums}
+
+\hyperlink{apx:SubproblemResolution}{\texttt{SubproblemResolution}}: Represents the set of subproblems of an intermediate problem or the value of the objective function of a feasible solution (leaf node).
+
+\hyperlink{apx:TraverseMethod}{\texttt{TraverseMethod}}: Order of traversing the subproblem tree with \texttt{solve}. See variants' docs for details.
+
+\subsection*{Traits}
+
+\hyperlink{apx:Subproblem}{\texttt{Subproblem}}: A problem (subproblem) to be solved with branch-and-bound.
+
+\subsection*{Functions}
+
+\hyperlink{apx:solve}{\texttt{solve}}: Solve a problem with branch-and-bound / backtracking, using one of the default strategies.
+
+\hyperlink{apx:solve_with_container}{\texttt{solve\_with\_container}} Solve a problem with branch-and-bound / backtracking using a custom subproblem container with a custom strategy.
+
+\section*{Trait Subproblem}
+
+\hypertarget{apx:Subproblem}{}
+
+\begin{lstlisting}
+pub trait Subproblem {
+    type Score: Ord;
+
+    // Required methods
+    fn branch_or_evaluate(&mut self) ->
+            SubproblemResolution<Self, Self::Score>;
+    fn bound(&self) -> Self::Score;
+}
+\end{lstlisting}
+
+A problem (subproblem) to be solved with branch-and-bound
+
+\subsection*{Required Associated Types}
+
+\subsubsection*{\texttt{type Score: Ord}}
+
+Return type of the boundary and the objective function. Higher score is better.
+
+\subsection*{Required methods}
+
+\subsubsection*{\texttt{fn branch\_or\_evaluate(\&mut self) -> SubproblemResolution<Self, Self::Score>}}
+
+Evaluates the subproblem space.
+
+If the space is to be broken further into subproblems, returns a sequence of subproblems (may be empty, which discards the current subspace).
+
+If the space consists of just one feasible solution to be solved directly, returns the score, which is the value of the objective function at the solution. The node is then considered a successful candidate.
+
+The method may mutate \texttt{self} as follows:
+
+\begin{itemize}
+ \item If \texttt{SubproblemResolution::Branched} is returned, the library shall discard the object after that, so any changes to \texttt{self} are allowed, even if after the changes it no longer represents the original subproblem;
+ \item If \texttt{SubproblemResolution::Solved} is returned, the library will use the subproblem object as a successful candidate, so mutations to the internal state are allowed, as long as \texttt{self} continues to represent the same subproblem.
+\end{itemize}
+
+\subsubsection*{\texttt{fn bound(\&self) -> Self::Score}}
+
+Value of the boundary function at the subproblem space.
+
+The boundary function gives an upper-boundary of the best solution that could potentially be found in this subproblem space. The value of the boundary function must be greater than or equal to every value of the objective score of any subproblem reachable through consecutive \texttt{.branch\_or\_evaluate} calls.
+
+
+If at some point in the search process a subproblem’s \texttt{.bound()} value is less than or equal to the current best solution, the subproblem is discarded (because no better solution will be found in its subtree).
+
+\section*{Enum SubproblemResolution}
+
+\hypertarget{apx:SubproblemResolution}{}
+
+\begin{lstlisting}
+pub enum SubproblemResolution<Node: ?Sized, Score> {
+    Branched(Box<dyn Iterator<Item = Node>>),
+    Solved(Score),
+}
+\end{lstlisting}
+
+Represents the set of subproblems of an intermediate problem or the value of the objective function of a feasible solution (leaf node).
+
+\subsection*{Variants}
+
+\subsubsection*{\texttt{Branched(Box<dyn Iterator<Item = Node>)}}
+
+Subproblems of an intermediate problem.
+
+\subsubsection*{\texttt{Solved(Score)}}
+
+The value of the objective function of a feasible solution.
+
+\section*{Enum TraverseMethod}
+
+\hypertarget{apx:TraverseMethod}{}
+
+\begin{lstlisting}
+pub enum TraverseMethod<Node> {
+    DepthFirst,
+    BreadthFirst,
+    Greedy,
+    Custom {
+        cmp: Box<dyn Fn(&Node, &Node) -> Ordering>,
+        cmp_superceeds_bound: bool,
+    },
+}
+\end{lstlisting}
+
+Order of traversing the subproblem tree with \texttt{solve}. See variants’ docs for details.
+
+\subsection*{Variants}
+
+\subsubsection*{\texttt{DepthFirst}}
+
+Depth-first search (DFS): descends into every subtree until reaches the leaf node (or determines that a subtree is not worth descending into because the boundary value is not better than the incumbent’s objective score).
+
+Nodes of the same layer will be processed in the order they are returned by the \texttt{Subproblem::branch\_or\_evaluate} method.
+
+For typical boundary functions, uses significantly less memory compared to greedy and breadth-first search.
+
+\subsubsection*{\texttt{BreadthFirst}}
+
+Breadth-first search (BFS): Traverses the subproblem tree layer by layer. The processing order among nodes on the same layer is unspecified.
+
+For typical boundary functions, behaves similar to greedy search but uses a simpler internal data structure to store subproblems to be processed.
+
+\subsubsection*{\texttt{Greedy}}
+
+Greedy search (also known as best-first search): traverses the tree in many directions simultaneously, on every iteration selects and evaluates the subproblem with the best value of the boundary function. All its children become candidates for the next selection (as long as their boundary value is better than the incumbent’s objective score).
+
+The processing order among subproblems with the same boundary value is unspecified.
+
+For typical boundary functions, behaves similar to breadth-first search but selects subproblems more optimally.
+
+\subsubsection*{\texttt{Custom}}
+
+Like greedy search but selects subproblems in the custom order, based on the given comparator \texttt{.cmp}.
+
+Processes subproblems in the order specified by \texttt{.cmp}: subproblems that compare greater are processed first! The processing order among subproblems that compare equal is unspecified.
+
+The processing order among nodes that compare equal according to \texttt{.cmp} is unspecified.
+
+Set \texttt{.cmp\_superceeds\_bound} to true only if \texttt{.cmp} guarantees that
+if \texttt{cmp(subproblem\_a, subproblem\_b) == Ordering::Less}
+then \texttt{subproblem\_a.bound() < subproblem\_b.bound()}
+(in other words, the order defined by \texttt{.cmp} is a specialized order / super-order with respect to the order defined by \texttt{Subproblem::bound}).
+
+If \texttt{.cmp\_superceeds\_bound} is set, the search will terminate as soon as the candidate that is best according to \texttt{.cmp} has the boundary value less (i.e., worse) than that of the current incumbent.
+
+\section*{Function solve}
+
+\hypertarget{apx:solve}{}
+
+\begin{lstlisting}
+pub fn solve<Node: Subproblem>(
+    initial: Node,
+    method: TraverseMethod<Node>,
+) -> Option<Node>
+\end{lstlisting}
+
+Solve a problem with branch-and-bound / backtracking, using one of the default strategies.
+
+Walks the subproblem tree (\texttt{initial} is the root) according to the method specified by \texttt{method}.
+
+\texttt{solve} should be preferred for simple scenareous (i.e., a single initial node, one of the default search strategy implementations). For more advanced use cases, use \hyperlink{apx:solve_with_container}{\texttt{solve\_with\_container}}.
+
+\section*{Function solve\_with\_container}
+
+\hypertarget{apx:solve_with_container}{}
+
+\begin{lstlisting}
+pub fn solve_with_container<Node, Container>(
+    container: Container,
+) -> Option<Node>
+where
+    Node: Subproblem,
+    Container: BnbAwareContainer<Node>,
+\end{lstlisting}
+
+Solve a problem with branch-and-bound / backtracking using a custom subproblem container with a custom strategy.
+
+Until the container is empty, a subproblem is popped from the container and evaluated; when a subproblem is branched, the generated subnodes are put into the container to be retrieved in following iterations.
+
+A container is, thus, responsible for the order in which subproblems will be examined, and can also implement additional features, such as early termination based on the current best value, early termination based on the number of iterations, eager or lazy evaluation, etc.
+
+\texttt{solve\_with\_container} should be preferred for advanced use cases (e.g., custom order or unusual early terination conditions). If you want one of the basic options, use \hyperlink{apx:solve}{\texttt{solve}}.
+
+\section*{Trait BnbAwareContainer}
+
+\hypertarget{apx:BnbAwareContainer}{}
+
+\begin{lstlisting}
+pub trait BnbAwareContainer<S: Subproblem> {
+    fn push_with_incumbent(
+        &mut self,
+        item: S,
+        score: Option<&S::Score>
+    );
+    fn pop_with_incumbent(
+        &mut self,
+        score: Option<&S::Score>
+    ) -> Option<S>;
+}
+\end{lstlisting}
+
+A container for subproblem objects, which is used to store unvisited nodes of the subproblem tree.
+
+A container provides an interface to push and pop items and:
+
+\begin{enumerate}
+ \item Defines order in which elements will be popped;
+ \item May implement additional features, such as early stopping, deciding not to push/return some elements based on the value of the incumbent, etc.
+\end{enumerate}
+
+\subsection*{Required Methods}
+
+\subsubsection*{\texttt{fn push\_with\_incumbent(\&mut self, item: S, score: Option<\&S::Score>)}}
+
+Add \texttt{item} to the container.
+
+\texttt{score} is the objective score of the current incumbent (if any). The container may decide not to add an item if it’s known to be worse than the incumbent (``eager'' evaluation strategy).
+
+\subsubsection*{\texttt{fn pop\_with\_incumbent(\&mut self, score: Option<\&S::Score>) -> Option<S>}}
+
+Get an item from the container. \texttt{score} is the objective score of the current incumbent (if any). The container may decide to skip items that are known to be worse than the incumbent (“lazy” evaluation strategy).
+
+Returns \texttt{None} iff the container is exhausted (i.e., there’s no more feasible subproblems to process).
+
+After \texttt{.pop\_with\_incumbent} returns \texttt{None}, the object should not be used anymore: calling either \texttt{.push\_with\_incumbent} or \texttt{.pop\_with\_incumbent} will have unspecified results.
