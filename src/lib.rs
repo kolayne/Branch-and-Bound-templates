@@ -19,8 +19,9 @@ pub mod bnb_aware_containers;
 use bnb_aware_containers::BinaryHeapExt;
 pub use bnb_aware_containers::BnbAwareContainer;
 
-/// Represents the set of subproblems of an intermediate problem
-/// or the value of the objective function of a feasible solution (leaf node).
+/// Subproblem evaluation result: either the set of subproblems of an
+/// intermediate problem, or the value of the objective function
+/// of a feasible solution (leaf node).
 pub enum SubproblemResolution<Node: ?Sized, Score> {
     /// Subproblems of an intermediate problem
     Branched(Box<dyn Iterator<Item = Node>>),
