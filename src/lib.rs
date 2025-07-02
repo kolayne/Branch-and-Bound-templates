@@ -93,7 +93,7 @@ pub trait Subproblem {
 /// `solve_with_container` should be preferred for advanced use cases (e.g., custom order
 /// or unusual early terination conditions). If you want one of the basic options,
 /// use [`solve`].
-pub fn solve_with_container<Node, Container>(mut container: Container) -> Option<Node>
+pub fn solve_with_container<Node, Container>(container: &mut Container) -> Option<Node>
 where
     Node: Subproblem,
     Container: BnbAwareContainer<Node>,
@@ -208,35 +208,35 @@ pub fn solve<Node: Subproblem>(initial: Node, method: TraverseMethod<Node>) -> O
 
     match method {
         Greedy => {
-            let pqueue = BinaryHeapExt {
+            let mut pqueue = BinaryHeapExt {
                 heap: binary_heap_plus::BinaryHeap::from_vec_cmp(
                     vec![initial],
                     |n1: &Node, n2: &Node| n1.bound().cmp(&n2.bound()),
                 ),
                 stop_early: true,
             };
-            solve_with_container(pqueue)
+            solve_with_container(&mut pqueue)
         }
 
         Custom {
             cmp,
             cmp_superceeds_bound: stop_early,
         } => {
-            let pqueue = BinaryHeapExt {
+            let mut pqueue = BinaryHeapExt {
                 heap: binary_heap_plus::BinaryHeap::from_vec_cmp(vec![initial], cmp),
                 stop_early,
             };
-            solve_with_container(pqueue)
+            solve_with_container(&mut pqueue)
         }
 
         BreadthFirst => {
-            let queue = std::collections::VecDeque::from_iter([initial]);
-            solve_with_container(queue)
+            let mut queue = std::collections::VecDeque::from_iter([initial]);
+            solve_with_container(&mut queue)
         }
 
         DepthFirst => {
-            let stack = vec![initial];
-            solve_with_container(stack)
+            let mut stack = vec![initial];
+            solve_with_container(&mut stack)
         }
     }
 }
